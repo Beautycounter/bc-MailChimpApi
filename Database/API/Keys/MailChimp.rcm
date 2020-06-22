@@ -1,0 +1,2593 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!--
+	Mailchimp REST connection manager definitions.
+	Copyright © 2006-2019 COZYROC LLC. All rights reserved.
+-->
+<ConnectionManager Name="Mailchimp" RuntimeVersion="1.9" Help="http://www.cozyroc.com/ssis/mailchimp-connection" xmlns="http://www.cozyroc.com/schema/rcm-config-1.0.xsd">
+	<Service EndPoint="undefined" />
+
+	<Authentication>
+		<Documentation>http://developer.mailchimp.com/documentation/mailchimp/guides/how-to-use-oauth2/</Documentation>
+
+		<Test Url="https://login.mailchimp.com/oauth2/metadata" Result="{{=connection.serverHost == 'undefined' ? alert('Set server host to: ' + response.api_endpoint + '/3.0') : ''}}" />
+
+		<Token Url="https://login.mailchimp.com/oauth2/authorize" Result="{{=response.access_token}}">
+			<Parameters>
+				<Parameter Name="response_type" Value="code" />
+				<Parameter Name="client_id" Value="432979224715" />
+				<Parameter Name="redirect_uri" Value="http://127.0.0.1" />
+			</Parameters>
+
+			<Authorized Id="https://login.mailchimp.com/oauth2/authorize" LocalListenUrl="http://127.0.0.1/" Result="{{=connection.execute({
+				url: 'https://login.mailchimp.com/oauth2/token',
+				method: 'POST',
+				parameters: {
+					code: response.code,
+					grant_type: 'authorization_code',
+					client_id: '432979224715',
+					client_secret: '394685c7e7fff741a53d79a2628745dc3973ec9add5730e507',
+					redirect_uri: 'http://127.0.0.1'
+				}
+			})}}" />
+		</Token>
+
+		<Parameters>
+			<Parameter Name="Authorization" Value="OAuth {{=token.Access}}" Type="HttpHeader" />
+		</Parameters>
+	</Authentication>
+
+	<Resources>
+		<Template>
+			<Field Name="ShortText" DataType="DT_WSTR" Length="255" />
+			<Field Name="LongText" DataType="DT_WSTR" Length="1000" />
+			<Field Name="DateTime" DataType="DT_DBTIMESTAMP" />
+			<Field Name="Link">
+				<Component Name="rel" Template="ShortText" />
+				<Component Name="href" Template="ShortText" />
+				<Component Name="method" Template="ShortText" />
+				<Component Name="targetSchema" Template="ShortText" />
+				<Component Name="schema" Template="ShortText" />
+			</Field>
+			<Field Name="List">
+				<Component Name="list_id" Template="ShortText" />
+				<Component Name="list_name" Template="ShortText" />
+				<Component Name="recipient_count" DataType="DT_I4" />
+				<Component Name="segment_text" Template="ShortText" />
+				<Component Name="segment_opts">
+					<Component Name="saved_segment_id" DataType="DT_I4" />
+					<Component Name="match" Template="ShortText" />
+					<Component Name="conditions" Template="LongText" Composite="true" />
+				</Component>
+			</Field>
+			<Field Name="TrackingT">
+				<Component Name="opens" DataType="DT_BOOL" />
+				<Component Name="html_clicks" DataType="DT_BOOL" />
+				<Component Name="text_clicks" DataType="DT_BOOL" />
+				<Component Name="goal_tracking" DataType="DT_BOOL" />
+				<Component Name="ecomm360" DataType="DT_BOOL" />
+				<Component Name="google_analytics" Template="ShortText" />
+				<Component Name="clicktale" Template="ShortText" />
+				<Component Name="salesforce">
+					<Component Name="campaign" DataType="DT_BOOL" />
+					<Component Name="notes" DataType="DT_BOOL" />
+				</Component>
+				<Component Name="capsule">
+					<Component Name="notes" DataType="DT_BOOL" />
+				</Component>
+			</Field>
+			<Field Name="CampaignSummary">
+				<Component Name="opens" DataType="DT_I4" />
+				<Component Name="unique_opens" DataType="DT_I4" />
+				<Component Name="open_rate" DataType="DT_R8" />
+				<Component Name="clicks" DataType="DT_I4" />
+				<Component Name="subscriber_clicks" DataType="DT_I4" />
+				<Component Name="click_rate" DataType="DT_R8" />
+				<Component Name="ecommerce">
+					<Component Name="total_orders" DataType="DT_I4" />
+					<Component Name="total_spent" DataType="DT_R8" />
+					<Component Name="total_revenue" DataType="DT_R8" />
+				</Component>
+			</Field>
+			<Field Name="CampaignSettings">
+				<Component Name="subject_line" Template="ShortText" />
+				<Component Name="title" Template="ShortText" />
+				<Component Name="from_name" Template="ShortText" />
+				<Component Name="reply_to" Template="ShortText" />
+				<Component Name="use_conversation" DataType="DT_BOOL" />
+				<Component Name="to_name" Template="ShortText" />
+				<Component Name="folder_id" Template="ShortText" />
+				<Component Name="authenticate" DataType="DT_BOOL" />
+				<Component Name="auto_footer" DataType="DT_BOOL" />
+				<Component Name="inline_css" DataType="DT_BOOL" />
+				<Component Name="auto_tweet" DataType="DT_BOOL" />
+				<Component Name="auto_fb_post" Template="LongText" Composite="true" />
+				<Component Name="fb_comments" DataType="DT_BOOL" />
+				<Component Name="timewarp" DataType="DT_BOOL" />
+				<Component Name="template_id" DataType="DT_I4" />
+				<Component Name="drag_and_drop" DataType="DT_BOOL" />
+			</Field>
+			<Field Name="SocialCard">
+				<Component Name="image_url" Template="ShortText" />
+				<Component Name="description" Template="LongText" />
+				<Component Name="title" Template="ShortText" />
+			</Field>
+			<Field Name="TriggerSettings">
+				<Component Name="workflow_type" Template="ShortText" />
+				<Component Name="send_immediately" DataType="DT_BOOL" />
+				<Component Name="trigger_on_import" DataType="DT_BOOL" />
+				<Component Name="category_name" Template="ShortText" />
+				<Component Name="recurringEvent">
+					<Component Name="runtime">
+						<Component Name="days" Template="ShortText" Composite="true" />
+						<Component Name="hours">
+							<Component Name="type" Template="ShortText" />
+							<Component Name="send_asap" DataType="DT_BOOL" />
+							<Component Name="send_at" Template="ShortText" />
+						</Component>
+					</Component>
+				</Component>
+				<Component Name="workflow_emails_count" DataType="DT_I4" />
+				<Component Name="workflow_title" Template="ShortText" />
+				<Component Name="merge_field_trigger" Template="ShortText" />
+			</Field>
+			<Field Name="FeedbackT">
+				<Component Name="feedback_id" DataType="DT_I4" IsKey="true" />
+				<Component Name="parent_id" DataType="DT_I4" />
+				<Component Name="block_id" DataType="DT_I4" />
+				<Component Name="message" Template="LongText" />
+				<Component Name="is_complete" DataType="DT_BOOL" />
+				<Component Name="created_by" Template="ShortText" ReadOnly="true" />
+				<Component Name="created_at" Template="DateTime" ReadOnly="true" />
+				<Component Name="updated_at" Template="DateTime" ReadOnly="true" />
+				<Component Name="source" Template="ShortText" ReadOnly="true" />
+				<Component Name="campaign_id" Template="ShortText" IsKey="true" />
+				<Component Name="_links" IsArray="true" Template="Link" />
+			</Field>
+			<Field Name="Message">
+				<Component Name="id" Template="ShortText" IsKey="true" />
+				<Component Name="conversation_id" Template="ShortText" />
+				<Component Name="list_id" DataType="DT_I4" ReadOnly="true" />
+				<Component Name="from_label" Template="ShortText" ReadOnly="true" />
+				<Component Name="from_email" Template="ShortText" />
+				<Component Name="subject" Template="ShortText" />
+				<Component Name="message" Template="LongText" />
+				<Component Name="read" DataType="DT_BOOL" />
+				<Component Name="timestamp" Template="DateTime" ReadOnly="true" />
+				<Component Name="_links" IsArray="true" Template="Link" ReadOnly="true" />
+			</Field>
+			<Field Name="AddressT">
+				<Component Name="address1" Template="ShortText" />
+				<Component Name="address2" Template="ShortText" />
+				<Component Name="city" Template="ShortText" />
+				<Component Name="province" Template="ShortText" />
+				<Component Name="province_code" Template="ShortText" />
+				<Component Name="postal_code" Template="ShortText" />
+				<Component Name="country" Template="ShortText" />
+				<Component Name="country_code" Template="ShortText" />
+				<Component Name="longitude" DataType="DT_R8" />
+				<Component Name="latitude" DataType="DT_R8" />
+			</Field>
+			<Field Name="CustomerT">
+				<Component Name="id" Template="ShortText" IsKey="true" />
+				<Component Name="email_address" Template="ShortText" />
+				<Component Name="opt_in_status" DataType="DT_BOOL" />
+				<Component Name="company" Template="ShortText" />
+				<Component Name="first_name" Template="ShortText" />
+				<Component Name="last_name" Template="ShortText" />
+				<Component Name="orders_count" DataType="DT_I4" />
+				<Component Name="total_spent" DataType="DT_R8" />
+				<Component Name="address" Template="AddressT" />
+				<Component Name="created_at" Template="DateTime" ReadOnly="true" />
+				<Component Name="updated_at" Template="DateTime" ReadOnly="true" />
+				<Component Name="_links" IsArray="true" Template="Link" ReadOnly="true" />
+			</Field>
+			<Field Name="CartLine">
+				<Component Name="id" Template="ShortText" IsKey="true" />
+				<Component Name="product_id" Template="ShortText" />
+				<Component Name="product_title" Template="ShortText" ReadOnly="true" />
+				<Component Name="product_variant_id" Template="ShortText" />
+				<Component Name="product_variant_title" Template="ShortText" ReadOnly="true" />
+				<Component Name="quantity" DataType="DT_I4" />
+				<Component Name="price" DataType="DT_R8" />
+				<Component Name="_links" IsArray="true" Template="Link" ReadOnly="true" />
+			</Field>
+			<Field Name="Cart">
+				<Component Name="id" Template="ShortText" IsKey="true" />
+				<Component Name="customer" Template="CustomerT" />
+				<Component Name="campaign_id" Template="ShortText" />
+				<Component Name="checkout_url" Template="ShortText" />
+				<Component Name="currency_code" Template="ShortText" />
+				<Component Name="order_total" DataType="DT_R8" />
+				<Component Name="tax_total" DataType="DT_R8" />
+				<Component Name="lines" IsArray="true" Template="CartLine">
+					<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/carts/lines/</Documentation>
+
+					<Get Url="/ecommerce/stores/{{=item.id}}/carts/{{=valueParent.id}}/lines">
+						<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/carts/lines/#read-get_ecommerce_stores_store_id_carts_cart_id_lines</Documentation>
+					</Get>
+				</Component>
+				<Component Name="created_at" Template="DateTime" ReadOnly="true" />
+				<Component Name="updated_at" Template="DateTime" ReadOnly="true" />
+				<Component Name="_links" IsArray="true" Template="Link" ReadOnly="true" />
+			</Field>
+			<Field Name="OrderLine">
+				<Component Name="id" Template="ShortText" IsKey="true" />
+				<Component Name="product_id" Template="ShortText" />
+				<Component Name="product_title" Template="ShortText" ReadOnly="true" />
+				<Component Name="product_variant_id" Template="ShortText" />
+				<Component Name="product_variant_title" Template="ShortText" ReadOnly="true" />
+				<Component Name="quantity" DataType="DT_I4" />
+				<Component Name="price" DataType="DT_R8" />
+				<Component Name="discount" DataType="DT_R8" />
+				<Component Name="_links" IsArray="true" Template="Link" ReadOnly="true" />
+			</Field>
+			<Field Name="Order">
+				<Component Name="id" Template="ShortText" IsKey="true" />
+				<Component Name="customer" Template="CustomerT" />
+				<Component Name="campaign_id" Template="ShortText" />
+				<Component Name="landing_site" Template="ShortText" />
+				<Component Name="financial_status" Template="ShortText" />
+				<Component Name="fulfillment_status" Template="ShortText" />
+				<Component Name="currency_code" Template="ShortText" />
+				<Component Name="order_total" DataType="DT_R8" />
+				<Component Name="order_url" Template="ShortText" />
+				<Component Name="discount_total" DataType="DT_R8" />
+				<Component Name="tax_total" DataType="DT_R8" />
+				<Component Name="shipping_total" DataType="DT_R8" />
+				<Component Name="tracking_code" Template="ShortText" />
+				<Component Name="processed_at_foreign" Template="ShortText" />
+				<Component Name="cancelled_at_foreign" Template="ShortText" />
+				<Component Name="updated_at_foreign" Template="ShortText" />
+				<Component Name="shipping_address" Template="AddressT" />
+				<Component Name="billing_address" Template="AddressT" />
+				<Component Name="lines" IsArray="true" Template="OrderLine">
+					<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/orders/lines/</Documentation>
+
+					<Get Url="/ecommerce/stores/{{=item.id}}/orders/{{=valueParent.id}}/lines">
+						<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/orders/lines/#read-get_ecommerce_stores_store_id_orders_order_id_lines</Documentation>
+					</Get>
+				</Component>
+				<Component Name="_links" IsArray="true" Template="Link" ReadOnly="true" />
+			</Field>
+			<Field Name="ProductVariant">
+				<Component Name="id" Template="ShortText" IsKey="true" />
+				<Component Name="title" Template="ShortText" />
+				<Component Name="url" Template="ShortText" />
+				<Component Name="sku" Template="ShortText" />
+				<Component Name="price" DataType="DT_R8" />
+				<Component Name="inventory_quantity" DataType="DT_I4" />
+				<Component Name="image_url" Template="ShortText" />
+				<Component Name="backorders" Template="ShortText" />
+				<Component Name="visibility" Template="ShortText" />
+				<Component Name="created_at" Template="DateTime" ReadOnly="true" />
+				<Component Name="updated_at" Template="DateTime" ReadOnly="true" />
+				<Component Name="_links" IsArray="true" Template="Link" ReadOnly="true" />
+			</Field>
+			<Field Name="ProductImage">
+				<Component Name="id" Template="ShortText" IsKey="true" />
+				<Component Name="url" Template="ShortText" />
+				<Component Name="variant_ids" Template="LongText" Composite="true" />
+				<Component Name="_links" IsArray="true" Template="Link" ReadOnly="true" />
+			</Field>
+			<Field Name="Product">
+				<Component Name="id" Template="ShortText" IsKey="true" />
+				<Component Name="title" Template="ShortText" />
+				<Component Name="handle" Template="ShortText" />
+				<Component Name="url" Template="ShortText" />
+				<Component Name="description" Template="LongText" />
+				<Component Name="type" Template="ShortText" />
+				<Component Name="vendor" Template="ShortText" />
+				<Component Name="image_url" Template="ShortText" />
+				<Component Name="variants" IsArray="true" Template="ProductVariant">
+					<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/products/variants/</Documentation>
+
+					<Get Url="/ecommerce/stores/{{=item.id}}}/products/{{=valueParent.id}}/variants">
+						<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/products/variants/#read-get_ecommerce_stores_store_id_products_product_id_variants</Documentation>
+					</Get>
+				</Component>
+				<Component Name="images" IsArray="true" Template="ProductImage">
+					<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/products/images/</Documentation>
+
+					<Get Url="/ecommerce/stores/{{=item.id}}/products/{{=valueParent.id}}/images">
+						<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/products/images/#read-get_ecommerce_stores_store_id_products_product_id_images</Documentation>
+					</Get>
+				</Component>
+				<Component Name="published_at_foreign" Template="DateTime" />
+				<Component Name="_links" IsArray="true" Template="Link" ReadOnly="true" />
+			</Field>
+			<Field Name="MemberNote">
+				<Component Name="id" DataType="DT_I4" IsKey="true" />
+				<Component Name="created_at" Template="DateTime" ReadOnly="true" />
+				<Component Name="created_by" Template="ShortText" ReadOnly="true" />
+				<Component Name="updated_at" Template="DateTime" ReadOnly="true" />
+				<Component Name="note" Template="LongText" />
+				<Component Name="list_id" Template="ShortText" ReadOnly="true" />
+				<Component Name="email_id" Template="ShortText" ReadOnly="true" />
+				<Component Name="_links" IsArray="true" Template="Link" ReadOnly="true" />
+			</Field>
+			<Field Name="RegularCondition">
+				<Component Name="op" Template="ShortText" />
+				<Component Name="field" Template="ShortText" />
+				<Component Name="value" Template="ShortText" />
+			</Field>
+			<Field Name="LocationT">
+				<Component Name="latitude" DataType="DT_R8" />
+				<Component Name="longitude" DataType="DT_R8" />
+				<Component Name="gmtoff" DataType="DT_I4" />
+				<Component Name="dstoff" DataType="DT_I4" />
+				<Component Name="country_code" Template="ShortText" />
+				<Component Name="timezone" Template="ShortText" />
+			</Field>
+			<Field Name="LastNote">
+				<Component Name="note_id" DataType="DT_I4" />
+				<Component Name="created_at" Template="DateTime" />
+				<Component Name="created_by" Template="ShortText" />
+				<Component Name="note" Template="LongText" />
+			</Field>
+			<Field Name="ABSplit">
+				<Component Name="bounces" DataType="DT_I4" />
+				<Component Name="abuse_reports" DataType="DT_I4" />
+				<Component Name="unsubs" DataType="DT_I4" />
+				<Component Name="recipient_clicks" DataType="DT_I4" />
+				<Component Name="forwards" DataType="DT_I4" />
+				<Component Name="forwards_opens" DataType="DT_I4" />
+				<Component Name="opens" DataType="DT_I4" />
+				<Component Name="last_open" Template="DateTime" />
+				<Component Name="unique_opens" DataType="DT_I4" />
+			</Field>
+			<Field Name="AbuseReport">
+				<Component Name="id" DataType="DT_I4" IsKey="true" />
+				<Component Name="campaign_id" Template="ShortText" />
+				<Component Name="list_id" Template="ShortText" />
+				<Component Name="email_id" Template="ShortText" />
+				<Component Name="email_address" Template="ShortText" />
+				<Component Name="merge_fields" Template="LongText" Composite="true" />
+				<Component Name="vip" DataType="DT_BOOL" />
+				<Component Name="date" Template="DateTime" />
+				<Component Name="_links" IsArray="true" Template="Link" />
+			</Field>
+			<Field Name="ReportT">
+				<Component Name="id" Template="ShortText" IsKey="true" />
+				<Component Name="campaign_title" Template="ShortText" />
+				<Component Name="type" Template="ShortText" />
+				<Component Name="list_id" Template="ShortText" />
+				<Component Name="list_name" Template="ShortText" />
+				<Component Name="subject_line" Template="ShortText" />
+				<Component Name="emails_sent" DataType="DT_I4" />
+				<Component Name="abuse_reports" DataType="DT_I4" />
+				<Component Name="unsubscribed" DataType="DT_I4" />
+				<Component Name="send_time" Template="DateTime" />
+				<Component Name="rss_last_send" Template="DateTime" />
+				<Component Name="bounces">
+					<Component Name="hard_bounces" DataType="DT_I4" />
+					<Component Name="soft_bounces" DataType="DT_I4" />
+					<Component Name="syntax_errors" DataType="DT_I4" />
+				</Component>
+				<Component Name="forwards">
+					<Component Name="forwards_count" DataType="DT_I4" />
+					<Component Name="forwards_opens" DataType="DT_I4" />
+				</Component>
+				<Component Name="opens">
+					<Component Name="opens_total" DataType="DT_I4" />
+					<Component Name="unique_opens" DataType="DT_I4" />
+					<Component Name="open_rate" DataType="DT_R8" />
+					<Component Name="last_open" Template="DateTime" />
+				</Component>
+				<Component Name="clicks">
+					<Component Name="clicks_total" DataType="DT_I4" />
+					<Component Name="unique_clicks" DataType="DT_I4" />
+					<Component Name="unique_subscriber_clicks" DataType="DT_I4" />
+					<Component Name="click_rate" DataType="DT_R8" />
+					<Component Name="last_click" Template="DateTime" />
+				</Component>
+				<Component Name="facebook_likes">
+					<Component Name="recipient_likes" DataType="DT_I4" />
+					<Component Name="unique_likes" DataType="DT_I4" />
+					<Component Name="facebook_likes" DataType="DT_I4" />
+				</Component>
+				<Component Name="industry_stats">
+					<Component Name="type" Template="ShortText" />
+					<Component Name="open_rate" DataType="DT_R8" />
+					<Component Name="click_rate" DataType="DT_R8" />
+					<Component Name="bounce_rate" DataType="DT_R8" />
+					<Component Name="unopen_rate" DataType="DT_R8" />
+					<Component Name="unsub_rate" DataType="DT_R8" />
+					<Component Name="abuse_rate" DataType="DT_R8" />
+				</Component>
+				<Component Name="list_stats">
+					<Component Name="sub_rate" DataType="DT_R8" />
+					<Component Name="unsub_rate" DataType="DT_R8" />
+					<Component Name="open_rate" DataType="DT_R8" />
+					<Component Name="click_rate" DataType="DT_R8" />
+				</Component>
+				<Component Name="ab_split">
+					<Component Name="a" Template="ABSplit" />
+					<Component Name="b" Template="ABSplit" />
+				</Component>
+				<Component Name="timewarp">
+					<Component Name="gmt_offset" DataType="DT_I4" />
+					<Component Name="opens" DataType="DT_I4" />
+					<Component Name="last_open" Template="DateTime" />
+					<Component Name="unique_opens" DataType="DT_I4" />
+					<Component Name="clicks" DataType="DT_I4" />
+					<Component Name="last_click" Template="DateTime" />
+					<Component Name="unique_clicks" DataType="DT_I4" />
+					<Component Name="bounces" DataType="DT_I4" />
+				</Component>
+				<Component Name="timeseries" IsArray="true">
+					<Component Name="timestamp" Template="DateTime" />
+					<Component Name="emails_sent" DataType="DT_I4" />
+					<Component Name="unique_opens" DataType="DT_I4" />
+					<Component Name="recipients_clicks" DataType="DT_I4" />
+				</Component>
+				<Component Name="share_report">
+					<Component Name="share_url" Template="ShortText" />
+					<Component Name="share_password" Template="ShortText" />
+				</Component>
+				<Component Name="ecommerce">
+					<Component Name="total_orders" DataType="DT_I4" />
+					<Component Name="total_spent" DataType="DT_R8" />
+					<Component Name="total_revenue" DataType="DT_R8" />
+				</Component>
+				<Component Name="delivery_status">
+					<Component Name="enabled" DataType="DT_BOOL" />
+					<Component Name="can_cancel" DataType="DT_BOOL" />
+					<Component Name="status" Template="ShortText" />
+					<Component Name="emails_sent" DataType="DT_I4" />
+					<Component Name="emails_canceled" DataType="DT_I4" />
+				</Component>
+				<Component Name="_links" IsArray="true" Template="Link" ReadOnly="true" />
+			</Field>
+
+			<Resource Name="Base">
+				<Read Result="{{=response[resource.readList]}}">
+					<Parameters>
+						<Parameter Name="fields" Value="{{=_.map(parameters.fields, function(field) { return resource.readList + '.' + field; }).join()}}" />
+						<Parameter Name="count" Value="{{=parameters.batchSize}}" />
+						<Parameter Name="offset" Value="{{=parameters.iterator}}" />
+						<Parameter Name="params" Value="{{=parameters}}" />
+					</Parameters>
+
+					<Iterator>
+						<Next Value="{{=parseInt(parameters.iterator || 0) + parameters.batchSize}}" />
+					</Iterator>
+				</Read>
+
+				<Create Method="POST">
+					<Parameters>
+						<Parameter Name="application/json" Value="{{=item}}" Type="Body" />
+					</Parameters>
+				</Create>
+
+				<Update Method="PATCH">
+					<Parameters>
+						<Parameter Name="application/json" Value="{{=item}}" Type="Body" />
+					</Parameters>
+				</Update>
+
+				<Delete Method="DELETE" />
+
+				<Upsert Method="PUT">
+					<Parameters>
+						<Parameter Name="application/json" Value="{{=item}}" Type="Body" />
+					</Parameters>
+				</Upsert>
+			</Resource>
+		</Template>
+
+		<Resource Name="Authorized App" Template="Base" Properties="{{={ readList: 'apps' } }}">
+			<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/authorized-apps/</Documentation>
+
+			<Fields>
+				<Field Name="id" DataType="DT_I4" IsKey="true" />
+				<Field Name="name" Template="ShortText" />
+				<Field Name="description" Template="LongText" />
+				<Field Name="users" Template="LongText" Composite="true" />
+				<Field Name="_links" IsArray="true" Template="Link" />
+			</Fields>
+
+			<Read Url="/authorized-apps">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/authorized-apps/#read-get_authorized_apps</Documentation>
+			</Read>
+		</Resource>
+
+		<Resource Name="Automation" Template="Base" Properties="{{={ readList: 'automations' } }}">
+			<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/automations/</Documentation>
+
+			<Fields>
+				<Field Name="id" Template="ShortText" IsKey="true" />
+				<Field Name="create_time" Template="DateTime" />
+				<Field Name="start_time" Template="DateTime" />
+				<Field Name="status" Template="ShortText" />
+				<Field Name="emails_sent" DataType="DT_I4" />
+				<Field Name="recipients" Template="List" />
+				<Field Name="settings">
+					<Component Name="title" Template="ShortText" />
+					<Component Name="from_name" Template="ShortText" />
+					<Component Name="reply_to" Template="ShortText" />
+					<Component Name="use_conversation" DataType="DT_BOOL" />
+					<Component Name="to_name" Template="ShortText" />
+					<Component Name="authenticate" DataType="DT_BOOL" />
+					<Component Name="auto_footer" DataType="DT_BOOL" />
+					<Component Name="inline_css" DataType="DT_BOOL" />
+				</Field>
+				<Field Name="tracking" Template="TrackingT" />
+				<Field Name="trigger_settings" Template="TriggerSettings" />
+				<Field Name="report_summary" Template="CampaignSummary" ReadOnly="true" />
+				<Field Name="_links" IsArray="true" Template="Link" />
+				<Field Name="emails" IsArray="true">
+					<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/automations/emails/</Documentation>
+
+					<Get Url="/automations/{{=item.id}}/emails">
+						<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/automations/emails/#read-get_automations_workflow_id_emails</Documentation>
+					</Get>
+
+					<Component Name="id" Template="ShortText" />
+					<Component Name="workflow_id" Template="ShortText" />
+					<Component Name="position" DataType="DT_I4" />
+					<Component Name="delay">
+						<Component Name="amount" DataType="DT_I4" />
+						<Component Name="type" Template="ShortText" />
+						<Component Name="direction" Template="ShortText" />
+						<Component Name="action" Template="ShortText" />
+						<Component Name="action_description" Template="LongText" />
+						<Component Name="full_description" Template="LongText" />
+					</Component>
+					<Component Name="create_time" Template="DateTime" />
+					<Component Name="start_time" Template="DateTime" />
+					<Component Name="archive_url" Template="ShortText" />
+					<Component Name="status" Template="ShortText" />
+					<Component Name="emails_sent" DataType="DT_I4" />
+					<Component Name="send_time" Template="DateTime" />
+					<Component Name="content_type" Template="ShortText" />
+					<Component Name="recipients" Template="List" />
+					<Component Name="settings" Template="CampaignSettings" />
+					<Component Name="tracking" Template="TrackingT" />
+					<Component Name="social_card" Template="SocialCard" />
+					<Component Name="trigger_settings" Template="TriggerSettings" />
+					<Component Name="report_summary" Template="CampaignSummary" ReadOnly="true" />
+					<Component Name="_links" IsArray="true" Template="Link" />
+					<Component Name="queue" IsArray="true">
+						<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/automations/emails/queue/</Documentation>
+
+						<Get Url="/automations/{{=item.id}}/emails/{{=valueParent.id}}/queue">
+							<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/automations/emails/queue/#read-get_automations_workflow_id_emails_workflow_email_id_queue</Documentation>
+						</Get>
+
+						<Component Name="id" Template="ShortText" />
+						<Component Name="workflow_id" Template="ShortText" />
+						<Component Name="email_id" Template="ShortText" />
+						<Component Name="list_id" Template="ShortText" />
+						<Component Name="email_address" Template="ShortText" />
+						<Component Name="next_send" Template="ShortText" />
+						<Component Name="_links" IsArray="true" Template="Link" />
+					</Component>
+				</Field>
+				<Field Name="removed-subscribers">
+					<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/automations/removed-subscribers/</Documentation>
+
+					<Get Url="/automations/{{=item.id}}/removed-subscribers" Value="{{=response.subscribers}}">
+						<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/automations/removed-subscribers/#read-get_automations_workflow_id_removed_subscribers</Documentation>
+					</Get>
+
+					<Component Name="id" Template="ShortText" />
+					<Component Name="workflow_id" Template="ShortText" />
+					<Component Name="list_id" Template="ShortText" />
+					<Component Name="email_address" Template="ShortText" />
+					<Component Name="_links" IsArray="true" Template="Link" />
+				</Field>
+			</Fields>
+
+			<Read Url="/automations">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/automations/#read-get_automations</Documentation>
+			</Read>
+		</Resource>
+
+		<Resource Name="Batch Operation" Template="Base" Properties="{{={ readList: 'batches' } }}">
+			<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/batches/</Documentation>
+
+			<Fields>
+				<Field Name="id" Template="ShortText" IsKey="true" />
+				<Field Name="status" Template="ShortText" ReadOnly="true" />
+				<Field Name="total_operations" DataType="DT_I4" ReadOnly="true" />
+				<Field Name="finished_operations" DataType="DT_I4" ReadOnly="true" />
+				<Field Name="errored_operations" DataType="DT_I4" ReadOnly="true" />
+				<Field Name="submitted_at" Template="DateTime" ReadOnly="true" />
+				<Field Name="completed_at" Template="DateTime" ReadOnly="true" />
+				<Field Name="response_body_url" Template="ShortText" ReadOnly="true" />
+				<Field Name="_links" IsArray="true" Template="Link" ReadOnly="true" />
+				<Field Name="operations" IsArray="true">
+					<Component Name="method" Template="ShortText" />
+					<Component Name="path" Template="ShortText" />
+					<Component Name="params" Template="LongText" Composite="true" />
+					<Component Name="body" Template="LongText" />
+					<Component Name="operation_id" Template="ShortText" />
+				</Field>
+			</Fields>
+
+			<Read Url="/batches">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/batches/#read-get_batches</Documentation>
+			</Read>
+
+			<Create Url="/batches">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/batches/#create-post_batches</Documentation>
+			</Create>
+
+			<Delete Url="/batches/{{=item.id}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/batches/#delete-delete_batches_batch_id</Documentation>
+			</Delete>
+		</Resource>
+
+		<Resource Name="Batch Webhook" Template="Base" Properties="{{={ readList: 'webhooks' } }}">
+			<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/batch-webhooks/</Documentation>
+
+			<Fields>
+				<Field Name="id" Template="ShortText" IsKey="true" />
+				<Field Name="url" Template="ShortText" />
+				<Field Name="_links" IsArray="true" Template="Link" ReadOnly="true" />
+			</Fields>
+
+			<Read Url="/batch-webhooks">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/batch-webhooks/#read-get_batch_webhooks</Documentation>
+			</Read>
+
+			<Create Url="/batch-webhooks">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/batch-webhooks/#create-post_batch_webhooks</Documentation>
+			</Create>
+
+			<Update Url="/batch-webhooks/{{=item.id}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/batch-webhooks/#edit-patch_batch_webhooks_batch_webhook_id</Documentation>
+			</Update>
+
+			<Delete Url="/batch-webhooks/{{=item.id}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/batch-webhooks/#delete-delete_batch_webhooks_batch_webhook_id</Documentation>
+			</Delete>
+		</Resource>
+
+		<Resource Name="Campaign Folder" Template="Base" Properties="{{={ readList: 'folders' } }}">
+			<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/campaign-folders/</Documentation>
+
+			<Fields>
+				<Field Name="id" Template="ShortText" IsKey="true" />
+				<Field Name="name" Template="ShortText" />
+				<Field Name="count" DataType="DT_I4" ReadOnly="true" />
+				<Field Name="_links" IsArray="true" Template="Link" ReadOnly="true" />
+			</Fields>
+
+			<Read Url="/campaign-folders">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/campaign-folders/#read-get_campaign_folders</Documentation>
+			</Read>
+
+			<Create Url="/campaign-folders">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/campaign-folders/#create-post_campaign_folders</Documentation>
+			</Create>
+
+			<Update Url="/campaign-folders/{{=item.id}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/campaign-folders/#edit-patch_campaign_folders_folder_id</Documentation>
+			</Update>
+
+			<Delete Url="/campaign-folders/{{=item.id}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/campaign-folders/#delete-delete_campaign_folders_folder_id</Documentation>
+			</Delete>
+		</Resource>
+
+		<Resource Name="Campaign" Template="Base" Properties="{{={ readList: 'campaigns' } }}">
+			<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/campaigns/</Documentation>
+
+			<Fields>
+				<Field Name="id" Template="ShortText" IsKey="true" />
+				<Field Name="web_id" DataType="DT_I4" ReadOnly="true" />
+				<Field Name="type" Template="ShortText" />
+				<Field Name="create_time" Template="DateTime" ReadOnly="true" />
+				<Field Name="archive_url" Template="ShortText" ReadOnly="true" />
+				<Field Name="long_archive_url" Template="ShortText" ReadOnly="true" />
+				<Field Name="status" Template="ShortText" ReadOnly="true" />
+				<Field Name="emails_sent" DataType="DT_I4" ReadOnly="true" />
+				<Field Name="send_time" Template="DateTime" ReadOnly="true" />
+				<Field Name="content_type" Template="ShortText" ReadOnly="true" />
+				<Field Name="recipients" Template="List" />
+				<Field Name="settings" Template="CampaignSettings" />
+				<Field Name="variate_settings">
+					<Component Name="winning_combination_id" Template="ShortText" />
+					<Component Name="winning_campaign_id" Template="ShortText" />
+					<Component Name="winner_criteria" Template="ShortText" />
+					<Component Name="wait_time" DataType="DT_I4" />
+					<Component Name="test_size" DataType="DT_I4" />
+					<Component Name="subject_lines" Template="LongText" Composite="true" />
+					<Component Name="send_times" Template="LongText" Composite="true" />
+					<Component Name="from_names" Template="LongText" Composite="true" />
+					<Component Name="reply_to_addresses" Template="LongText" Composite="true" />
+					<Component Name="contents" Template="LongText" Composite="true" ReadOnly="true" />
+					<Component Name="combinations" IsArray="true">
+						<Component Name="id" Template="ShortText" />
+						<Component Name="subject_line" DataType="DT_I4" />
+						<Component Name="send_time" DataType="DT_I4" />
+						<Component Name="from_name" DataType="DT_I4" />
+						<Component Name="reply_to" DataType="DT_I4" />
+						<Component Name="content_description" DataType="DT_I4" />
+						<Component Name="recipients" DataType="DT_I4" />
+					</Component>
+				</Field>
+				<Field Name="tracking" Template="TrackingT" />
+				<Field Name="rss_opts">
+					<Component Name="feed_url" Template="ShortText" />
+					<Component Name="frequency" Template="ShortText" />
+					<Component Name="schedule">
+						<Component Name="hour" DataType="DT_I4" />
+						<Component Name="daily_send">
+							<Component Name="sunday" DataType="DT_BOOL" />
+							<Component Name="monday" DataType="DT_BOOL" />
+							<Component Name="tuesday" DataType="DT_BOOL" />
+							<Component Name="wednesday" DataType="DT_BOOL" />
+							<Component Name="thursday" DataType="DT_BOOL" />
+							<Component Name="friday" DataType="DT_BOOL" />
+							<Component Name="saturday" DataType="DT_BOOL" />
+						</Component>
+						<Component Name="weekly_send_day" Template="ShortText" />
+						<Component Name="monthly_send_date" DataType="DT_I4" />
+					</Component>
+					<Component Name="last_sent" Template="DateTime" ReadOnly="true" />
+					<Component Name="constrain_rss_img" DataType="DT_BOOL" />
+				</Field>
+				<Field Name="ab_split_opts">
+					<Component Name="split_test" Template="ShortText" />
+					<Component Name="pick_winner" Template="ShortText" />
+					<Component Name="wait_units" Template="ShortText" />
+					<Component Name="wait_time" DataType="DT_I4" />
+					<Component Name="split_size" DataType="DT_I4" />
+					<Component Name="from_name_a" Template="ShortText" />
+					<Component Name="from_name_b" Template="ShortText" />
+					<Component Name="reply_email_a" Template="ShortText" />
+					<Component Name="reply_email_b" Template="ShortText" />
+					<Component Name="subject_a" Template="ShortText" />
+					<Component Name="subject_b" Template="ShortText" />
+					<Component Name="send_time_a" Template="DateTime" />
+					<Component Name="send_time_b" Template="DateTime" />
+					<Component Name="send_time_winner" Template="DateTime" />
+				</Field>
+				<Field Name="social_card" Template="SocialCard" />
+				<Field Name="report_summary" Template="CampaignSummary" ReadOnly="true" />
+				<Field Name="delivery_status" ReadOnly="true">
+					<Component Name="enabled" DataType="DT_BOOL" />
+					<Component Name="can_cancel" DataType="DT_BOOL" />
+					<Component Name="status" Template="ShortText" />
+					<Component Name="emails_sent" DataType="DT_I4" />
+					<Component Name="emails_canceled" DataType="DT_I4" />
+				</Field>
+				<Field Name="_links" IsArray="true" Template="Link" ReadOnly="true" />
+				<Field Name="content">
+					<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/campaigns/content/</Documentation>
+
+					<Get Url="/campaigns/{{=item.id}}/content">
+						<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/campaigns/content/#read-get_campaigns_campaign_id_content</Documentation>
+					</Get>
+
+					<Set Url="/campaigns/{{=item.id}}/content" Method="PUT">
+						<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/campaigns/content/#edit-put_campaigns_campaign_id_content</Documentation>
+
+						<Parameters>
+							<Parameter Name="application/json" Value="{{=item.content}}" Type="Body" />
+						</Parameters>
+					</Set>
+
+					<Component Name="variate_contents" IsArray="true">
+						<Component Name="content_label" Template="ShortText" />
+						<Component Name="plain_text" Template="LongText" />
+						<Component Name="html" Template="LongText" />
+					</Component>
+					<Component Name="plain_text" Template="LongText" />
+					<Component Name="html" Template="LongText" />
+					<Component Name="archive_html" Template="LongText" />
+					<Component Name="_links" IsArray="true" Template="Link" ReadOnly="true" />
+					<Component Name="url" Template="ShortText" />
+					<Component Name="template">
+						<Component Name="id" DataType="DT_I4" />
+						<Component Name="sections" Template="LongText" Composite="true" />
+					</Component>
+					<Component Name="archive">
+						<Component Name="archive_content" DataType="DT_IMAGE" />
+						<Component Name="archive_type" Template="ShortText" />
+					</Component>
+				</Field>
+				<Field Name="feedback" Template="FeedbackT" ReadOnly="true">
+					<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/campaigns/feedback/</Documentation>
+
+					<Get Url="/campaigns/{{=item.id}}/feedback">
+						<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/campaigns/feedback/#read-get_campaigns_campaign_id_feedback</Documentation>
+					</Get>
+				</Field>
+				<Field Name="send-checklist" ReadOnly="true">
+					<Get Url="/campaigns/{{=item.id}}/send-checklist" Value="{{=response.items}}">
+						<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/campaigns/send-checklist/#read-get_campaigns_campaign_id_send_checklist</Documentation>
+					</Get>
+
+					<Component Name="id" DataType="DT_I4" />
+					<Component Name="type" Template="ShortText" />
+					<Component Name="heading" Template="ShortText" />
+					<Component Name="details" Template="LongText" />
+				</Field>
+			</Fields>
+
+			<Read Url="/campaigns">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/campaigns/#read-get_campaigns</Documentation>
+			</Read>
+
+			<Read Id="search" Url="/search-campaigns" Result="{{=_.pluck(response.results, 'campaign')}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/search-campaigns/</Documentation>
+
+				<Parameters>
+					<Parameter Name="query" Value="{{=parameters.search}}" />
+				</Parameters>
+
+				<User>
+					<Parameter Name="search">
+						<Documentation>Required. Specify search query (alias for "query").</Documentation>
+					</Parameter>
+				</User>
+			</Read>
+
+			<Create Url="/campaigns">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/campaigns/#create-post_campaigns</Documentation>
+			</Create>
+
+			<Update Url="/campaigns/{{=item.id}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/campaigns/#edit-patch_campaigns_campaign_id</Documentation>
+			</Update>
+
+			<Delete Url="/campaigns/{{=item.id}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/campaigns/#delete-delete_campaigns_campaign_id</Documentation>
+			</Delete>
+		</Resource>
+
+		<Resource Name="Campaign Feedback" Template="Base" Properties="{{={ readList: 'feedback' } }}">
+			<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/campaigns/feedback/</Documentation>
+
+			<Fields Template="FeedbackT" />
+
+			<Read Url="/campaigns/{{=parameters.campaign_id}}/feedback">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/campaigns/feedback/#read-get_campaigns_campaign_id_feedback</Documentation>
+
+				<User>
+					<Parameter Name="campaign_id">
+						<Documentation>Required. Specify campaign identifier.</Documentation>
+					</Parameter>
+				</User>
+			</Read>
+
+			<Create Url="/campaigns/{{=item.campaign_id}}/feedback">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/campaigns/feedback/#create-post_campaigns_campaign_id_feedback</Documentation>
+			</Create>
+
+			<Update Url="/campaigns/{{=item.campaign_id}}/feedback/{{=item.feedback_id}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/campaigns/feedback/#edit-patch_campaigns_campaign_id_feedback_feedback_id</Documentation>
+			</Update>
+
+			<Delete Url="/campaigns/{{=item.campaign_id}}/feedback/{{=item.feedback_id}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/campaigns/feedback/#delete-delete_campaigns_campaign_id_feedback_feedback_id</Documentation>
+			</Delete>
+		</Resource>
+
+		<Resource Name="Conversation" Template="Base" Properties="{{={ readList: 'conversations' } }}">
+			<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/conversations/</Documentation>
+
+			<Fields>
+				<Field Name="id" Template="ShortText" IsKey="true" />
+				<Field Name="message_count" DataType="DT_I4" />
+				<Field Name="campaign_id" Template="ShortText" />
+				<Field Name="list_id" Template="ShortText" />
+				<Field Name="unread_messages" DataType="DT_I4" />
+				<Field Name="from_label" Template="ShortText" />
+				<Field Name="from_email" Template="ShortText" />
+				<Field Name="subject" Template="ShortText" />
+				<Field Name="last_message" Template="Message" />
+				<Field Name="_links" IsArray="true" Template="Link" ReadOnly="true" />
+				<Field Name="messages" IsArray="true" Template="Message">
+					<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/conversations/messages/</Documentation>
+
+					<Get Url="/conversations/{{=item.id}}/messages" Value="{{=response.conversation_messages}}">
+						<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/conversations/messages/#read-get_conversations_conversation_id_messages</Documentation>
+					</Get>
+				</Field>
+			</Fields>
+
+			<Read Url="/conversations">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/conversations/#read-get_conversations</Documentation>
+			</Read>
+		</Resource>
+
+		<Resource Name="Conversation Message" Template="Base" Properties="{{={ readList: 'conversation_messages' } }}">
+			<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/conversations/messages/</Documentation>
+
+			<Fields Template="Message" />
+
+			<Read Url="/conversations/{{=parameters.conversation_id}}/messages">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/conversations/messages/#read-get_conversations_conversation_id_messages</Documentation>
+
+				<User>
+					<Parameter Name="conversation_id">
+						<Documentation>Required. Specify conversation identifier.</Documentation>
+					</Parameter>
+				</User>
+			</Read>
+
+			<Create Url="/conversations/{{=item.conversation_id}}/messages">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/conversations/messages/#create-post_conversations_conversation_id_messages</Documentation>
+			</Create>
+		</Resource>
+
+		<Resource Name="Ecommerce Store" Template="Base" Properties="{{={ readList: 'stores' } }}">
+			<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/</Documentation>
+
+			<Fields>
+				<Field Name="id" Template="ShortText" IsKey="true" />
+				<Field Name="list_id" Template="ShortText" ReadOnly="true" />
+				<Field Name="name" Template="ShortText" />
+				<Field Name="platform" Template="ShortText" />
+				<Field Name="domain" Template="ShortText" />
+				<Field Name="is_syncing" DataType="DT_BOOL" />
+				<Field Name="email_address" Template="ShortText" />
+				<Field Name="currency_code" Template="ShortText" />
+				<Field Name="money_format" Template="ShortText" />
+				<Field Name="primary_locale" Template="ShortText" />
+				<Field Name="timezone" Template="ShortText" />
+				<Field Name="phone" Template="ShortText" />
+				<Field Name="address" Template="AddressT" />
+				<Field Name="created_at" Template="DateTime" ReadOnly="true" />
+				<Field Name="updated_at" Template="DateTime" ReadOnly="true" />
+				<Field Name="_links" IsArray="true" Template="Link" ReadOnly="true" />
+				<Field Name="carts" IsArray="true" Template="Cart" ReadOnly="true">
+					<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/carts/</Documentation>
+
+					<Get Url="/ecommerce/stores/{{=item.id}}/carts">
+						<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/carts/#read-get_ecommerce_stores_store_id_carts</Documentation>
+					</Get>
+				</Field>
+				<Field Name="customers" IsArray="true" Template="CustomerT" ReadOnly="true">
+					<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/customers/</Documentation>
+
+					<Get Url="/ecommerce/stores/{{=item.id}}/customers">
+						<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/customers/#read-get_ecommerce_stores_store_id_customers</Documentation>
+					</Get>
+				</Field>
+				<Field Name="orders" IsArray="true" Template="Order" ReadOnly="true">
+					<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/orders/</Documentation>
+
+					<Get Url="/ecommerce/stores/{{=item.id}}/orders">
+						<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/orders/#read-get_ecommerce_stores_store_id_orders</Documentation>
+					</Get>
+				</Field>
+				<Field Name="products" IsArray="true" Template="Product" ReadOnly="true">
+					<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/products/</Documentation>
+
+					<Get Url="/ecommerce/stores/{{=item.id}}/products">
+						<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/products/#read-get_ecommerce_stores_store_id_products</Documentation>
+					</Get>
+				</Field>
+			</Fields>
+
+			<Read Url="/ecommerce/stores">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/#read-get_ecommerce_stores</Documentation>
+			</Read>
+
+			<Create Url="/ecommerce/stores">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/#create-post_ecommerce_stores</Documentation>
+			</Create>
+
+			<Update Url="/ecommerce/stores/{=item.id}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/#edit-patch_ecommerce_stores_store_id</Documentation>
+			</Update>
+
+			<Delete Url="/ecommerce/stores/{=item.id}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/#delete-delete_ecommerce_stores_store_id</Documentation>
+			</Delete>
+		</Resource>
+
+		<Resource Name="Ecommerce Store Cart" Template="Base" Properties="{{={ readList: 'carts' } }}">
+			<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/carts/</Documentation>
+
+			<Fields Template="Cart">
+				<Field Name="store_id" Template="ShortText" IsKey="true" />
+			</Fields>
+
+			<Read Url="/ecommerce/stores/{{=parameters.store_id}}/carts">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/carts/#read-get_ecommerce_stores_store_id_carts</Documentation>
+
+				<User>
+					<Parameter Name="store_id">
+						<Documentation>Required. Specify store identifier.</Documentation>
+					</Parameter>
+				</User>
+			</Read>
+
+			<Create Url="/ecommerce/stores/{{=item.store_id}}/carts">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/carts/#create-post_ecommerce_stores_store_id_carts</Documentation>
+			</Create>
+
+			<Update Url="/ecommerce/stores/{{=item.store_id}}/carts/{{=item.id}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/carts/#edit-patch_ecommerce_stores_store_id_carts_cart_id</Documentation>
+			</Update>
+
+			<Delete Url="/ecommerce/stores/{{=item.store_id}}/carts/{{=item.id}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/carts/#delete-delete_ecommerce_stores_store_id_carts_cart_id</Documentation>
+			</Delete>
+		</Resource>
+
+		<Resource Name="Ecommerce Store Cart Line" Template="Base" Properties="{{={ readList: 'lines' } }}">
+			<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/carts/lines/</Documentation>
+
+			<Fields Template="CartLine">
+				<Field Name="store_id" Template="ShortText" IsKey="true" />
+				<Field Name="cart_id" Template="ShortText" IsKey="true" />
+			</Fields>
+
+			<Read Url="/ecommerce/stores/{{=parameters.store_id}}/carts/{{=parameters.cart_id}}/lines">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/carts/lines/#read-get_ecommerce_stores_store_id_carts_cart_id_lines</Documentation>
+
+				<User>
+					<Parameter Name="store_id">
+						<Documentation>Required. Specify store identifier.</Documentation>
+					</Parameter>
+					<Parameter Name="cart_id">
+						<Documentation>Required. Specify cart identifier.</Documentation>
+					</Parameter>
+				</User>
+			</Read>
+
+			<Create Url="/ecommerce/stores/{{=item.store_id}}/carts/{{=item.cart_id}}/lines">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/carts/lines/#create-post_ecommerce_stores_store_id_carts_cart_id_lines</Documentation>
+			</Create>
+
+			<Update Url="/ecommerce/stores/{{=item.store_id}}/carts/{{=item.cart_id}}/lines/{{=item.id}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/carts/lines/#edit-patch_ecommerce_stores_store_id_carts_cart_id_lines_line_id</Documentation>
+			</Update>
+
+			<Delete Url="/ecommerce/stores/{{=item.store_id}}/carts/{{=item.cart_id}}/lines/{{=item.id}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/carts/lines/#delete-delete_ecommerce_stores_store_id_carts_cart_id_lines_line_id</Documentation>
+			</Delete>
+		</Resource>
+
+		<Resource Name="Ecommerce Store Customer" Template="Base" Properties="{{={ readList: 'customers' } }}">
+			<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/customers/</Documentation>
+
+			<Fields Template="CustomerT">
+				<Field Name="store_id" Template="ShortText" IsKey="true" />
+			</Fields>
+
+			<Read Url="/ecommerce/stores/{{=parameters.store_id}}/customers">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/customers/#read-get_ecommerce_stores_store_id_customers</Documentation>
+
+				<User>
+					<Parameter Name="store_id">
+						<Documentation>Required. Specify store identifier.</Documentation>
+					</Parameter>
+				</User>
+			</Read>
+
+			<Create Url="/ecommerce/stores/{{=item.store_id}}/customers">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/customers/#create-post_ecommerce_stores_store_id_customers</Documentation>
+			</Create>
+
+			<Update Url="/ecommerce/stores/{{=item.store_id}}/customers/{{=item.id}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/customers/#edit-patch_ecommerce_stores_store_id_customers_customer_id</Documentation>
+			</Update>
+
+			<Delete Url="/ecommerce/stores/{{=item.store_id}}/customers/{{=item.id}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/customers/#delete-delete_ecommerce_stores_store_id_customers_customer_id</Documentation>
+			</Delete>
+
+			<Upsert Url="/ecommerce/stores/{{=item.store_id}}/customers/{{=item.id}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/customers/#edit-put_ecommerce_stores_store_id_customers_customer_id</Documentation>
+			</Upsert>
+		</Resource>
+
+		<Resource Name="Ecommerce Store Order" Template="Base" Properties="{{={ readList: 'orders' } }}">
+			<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/orders/</Documentation>
+
+			<Fields Template="Order">
+				<Field Name="store_id" Template="ShortText" IsKey="true" />
+			</Fields>
+
+			<Read Url="/ecommerce/stores/{{=parameters.store_id}}/orders">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/orders/#read-get_ecommerce_stores_store_id_orders</Documentation>
+
+				<User>
+					<Parameter Name="store_id">
+						<Documentation>Required. Specify store identifier.</Documentation>
+					</Parameter>
+				</User>
+			</Read>
+
+			<Create Url="/ecommerce/stores/{{=item.store_id}}/orders">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/orders/#create-post_ecommerce_stores_store_id_orders</Documentation>
+			</Create>
+
+			<Update Url="/ecommerce/stores/{{=item.store_id}}/orders/{{=item.id}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/orders/#edit-patch_ecommerce_stores_store_id_orders_order_id</Documentation>
+			</Update>
+
+			<Delete Url="/ecommerce/stores/{{=item.store_id}}/orders/{{=item.id}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/orders/#delete-delete_ecommerce_stores_store_id_orders_order_id</Documentation>
+			</Delete>
+		</Resource>
+
+		<Resource Name="Ecommerce Store Order Line" Template="Base" Properties="{{={ readList: 'lines' } }}">
+			<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/orders/lines/</Documentation>
+
+			<Fields Template="OrderLine">
+				<Field Name="store_id" Template="ShortText" IsKey="true" />
+				<Field Name="order_id" Template="ShortText" IsKey="true" />
+			</Fields>
+
+			<Read Url="/ecommerce/stores/{{=parameters.store_id}}/orders/{{=parameters.order_id}}/lines">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/orders/lines/#read-get_ecommerce_stores_store_id_orders_order_id_lines</Documentation>
+
+				<User>
+					<Parameter Name="store_id">
+						<Documentation>Required. Specify store identifier.</Documentation>
+					</Parameter>
+					<Parameter Name="order_id">
+						<Documentation>Required. Specify order identifier.</Documentation>
+					</Parameter>
+				</User>
+			</Read>
+
+			<Create Url="/ecommerce/stores/{{=item.store_id}}/orders/{{=item.order_id}}/lines">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/orders/lines/#create-post_ecommerce_stores_store_id_orders_order_id_lines</Documentation>
+			</Create>
+
+			<Update Url="/ecommerce/stores/{{=item.store_id}}/orders/{{=item.order_id}}/lines/{{=item.id}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/orders/lines/#edit-patch_ecommerce_stores_store_id_orders_order_id_lines_line_id</Documentation>
+			</Update>
+
+			<Delete Url="/ecommerce/stores/{{=item.store_id}}/orders/{{=item.order_id}}/lines/{{=item.id}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/orders/lines/#delete-delete_ecommerce_stores_store_id_orders_order_id_lines_line_id</Documentation>
+			</Delete>
+		</Resource>
+
+		<Resource Name="Ecommerce Store Product" Template="Base" Properties="{{={ readList: 'products' } }}">
+			<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/products/</Documentation>
+
+			<Fields Template="Product">
+				<Field Name="store_id" Template="ShortText" IsKey="true" />
+			</Fields>
+
+			<Read Url="/ecommerce/stores/{{=parameters.store_id}}/products">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/products/#read-get_ecommerce_stores_store_id_products</Documentation>
+
+				<User>
+					<Parameter Name="store_id">
+						<Documentation>Required. Specify store identifier.</Documentation>
+					</Parameter>
+				</User>
+			</Read>
+
+			<Create Url="/ecommerce/stores/{{=item.store_id}}/products">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/products/#create-post_ecommerce_stores_store_id_products</Documentation>
+			</Create>
+
+			<Update Url="/ecommerce/stores/{{=item.store_id}}/products/{{=item.id}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/products/#edit-patch_ecommerce_stores_store_id_products_product_id</Documentation>
+			</Update>
+
+			<Delete Url="/ecommerce/stores/{{=item.store_id}}/products/{{=item.id}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/products/#delete-delete_ecommerce_stores_store_id_products_product_id</Documentation>
+			</Delete>
+		</Resource>
+
+		<Resource Name="Ecommerce Store Product Image" Template="Base" Properties="{{={ readList: 'images' } }}">
+			<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/products/images/</Documentation>
+
+			<Fields Template="ProductImage">
+				<Field Name="store_id" Template="ShortText" IsKey="true" />
+				<Field Name="product_id" Template="ShortText" IsKey="true" />
+			</Fields>
+
+			<Read Url="/ecommerce/stores/{{=parameters.store_id}}/products/{{=parameters.product_id}}/images">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/products/images/#read-get_ecommerce_stores_store_id_products_product_id_images</Documentation>
+
+				<User>
+					<Parameter Name="store_id">
+						<Documentation>Required. Specify store identifier.</Documentation>
+					</Parameter>
+					<Parameter Name="product_id">
+						<Documentation>Required. Specify product identifier.</Documentation>
+					</Parameter>
+				</User>
+			</Read>
+
+			<Create Url="/ecommerce/stores/{{=item.store_id}}/products/{{=item.product_id}}/images">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/products/images/#create-post_ecommerce_stores_store_id_products_product_id_images</Documentation>
+			</Create>
+
+			<Update Url="/ecommerce/stores/{{=item.store_id}}/products/{{=item.product_id}}/images/{{=item.id}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/products/images/#edit-patch_ecommerce_stores_store_id_products_product_id_images_image_id</Documentation>
+			</Update>
+
+			<Delete Url="/ecommerce/stores/{{=item.store_id}}/products/{{=item.product_id}}/images/{{=item.id}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/products/images/#delete-delete_ecommerce_stores_store_id_products_product_id_images_image_id</Documentation>
+			</Delete>
+		</Resource>
+
+		<Resource Name="Ecommerce Store Product Variant" Template="Base" Properties="{{={ readList: 'variants' } }}">
+			<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/products/variants/</Documentation>
+
+			<Fields Template="ProductVariant">
+				<Field Name="store_id" Template="ShortText" IsKey="true" />
+				<Field Name="product_id" Template="ShortText" IsKey="true" />
+			</Fields>
+
+			<Read Url="/ecommerce/stores/{{=parameters.store_id}}/products/{{=parameters.product_id}}/variants">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/products/variants/#read-get_ecommerce_stores_store_id_products_product_id_variants</Documentation>
+
+				<User>
+					<Parameter Name="store_id">
+						<Documentation>Required. Specify store identifier.</Documentation>
+					</Parameter>
+					<Parameter Name="product_id">
+						<Documentation>Required. Specify product identifier.</Documentation>
+					</Parameter>
+				</User>
+			</Read>
+
+			<Create Url="/ecommerce/stores/{{=item.store_id}}/products/{{=item.product_id}}/variants">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/products/variants/#create-post_ecommerce_stores_store_id_products_product_id_variants</Documentation>
+			</Create>
+
+			<Update Url="/ecommerce/stores/{{=item.store_id}}/products/{{=item.product_id}}/variants/{{=item.id}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/products/variants/#edit-put_ecommerce_stores_store_id_products_product_id_variants_variant_id</Documentation>
+			</Update>
+
+			<Delete Url="/ecommerce/stores/{{=item.store_id}}/products/{{=item.product_id}}/variants/{{=item.id}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/products/variants/#delete-delete_ecommerce_stores_store_id_products_product_id_variants_variant_id</Documentation>
+			</Delete>
+
+			<Upsert Url="/ecommerce/stores/{{=item.store_id}}/products/{{=item.product_id}}/variants/{{=item.id}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/ecommerce/stores/products/variants/#edit-patch_ecommerce_stores_store_id_products_product_id_variants_variant_id</Documentation>
+			</Upsert>
+		</Resource>
+
+		<Resource Name="File Manager File" Template="Base" Properties="{{={ readList: 'files' } }}">
+			<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/file-manager/files/</Documentation>
+
+			<Fields>
+				<Field Name="id" DataType="DT_I4" IsKey="true" />
+				<Field Name="folder_id" DataType="DT_I4" />
+				<Field Name="type" Template="ShortText" ReadOnly="true" />
+				<Field Name="name" Template="ShortText" />
+				<Field Name="full_size_url" Template="ShortText" ReadOnly="true" />
+				<Field Name="thumbnail_url" Template="ShortText" ReadOnly="true" />
+				<Field Name="size" DataType="DT_I4" ReadOnly="true" />
+				<Field Name="created_at" Template="DateTime" ReadOnly="true" />
+				<Field Name="created_by" Template="ShortText" ReadOnly="true" />
+				<Field Name="width" DataType="DT_I4" ReadOnly="true" />
+				<Field Name="height" DataType="DT_I4" ReadOnly="true" />
+				<Field Name="_links" IsArray="true" Template="Link" ReadOnly="true" />
+				<Field Name="file_data" DataType="DT_IMAGE">
+					<Get Url="{{=item.full_size_url}}" />
+					<Set Value="{{=!_.isUndefined(value) &amp;&amp; getClrType('System.Convert').ToBase64String(value)}}" />
+				</Field>
+			</Fields>
+
+			<Read Url="/file-manager/files">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/file-manager/files/#read-get_file_manager_files</Documentation>
+			</Read>
+
+			<Create Url="/file-manager/files">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/file-manager/files/#create-post_file_manager_files</Documentation>
+			</Create>
+
+			<Update Url="/file-manager/files/{{=item.id}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/file-manager/files/#edit-patch_file_manager_files_file_id</Documentation>
+			</Update>
+
+			<Delete Url="/file-manager/files/{{=item.id}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/file-manager/files/#delete-delete_file_manager_files_file_id</Documentation>
+			</Delete>
+		</Resource>
+
+		<Resource Name="File Manager Folder" Template="Base" Properties="{{={ readList: 'folders' } }}">
+			<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/file-manager/folders/</Documentation>
+
+			<Fields>
+				<Field Name="id" DataType="DT_I4" IsKey="true" />
+				<Field Name="name" Template="ShortText" />
+				<Field Name="file_count" DataType="DT_I4" ReadOnly="true" />
+				<Field Name="created_at" Template="DateTime" ReadOnly="true" />
+				<Field Name="created_by" Template="ShortText" ReadOnly="true" />
+				<Field Name="_links" IsArray="true" Template="Link" ReadOnly="true" />
+			</Fields>
+
+			<Read Url="/file-manager/folders">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/file-manager/folders/#read-get_file_manager_folders</Documentation>
+			</Read>
+
+			<Create Url="/file-manager/folders">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/file-manager/folders/#create-post_file_manager_folders</Documentation>
+			</Create>
+
+			<Update Url="/file-manager/folders/{{=item.id}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/file-manager/folders/#edit-patch_file_manager_folders_folder_id</Documentation>
+			</Update>
+
+			<Delete Url="/file-manager/folders/{{=item.id}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/file-manager/folders/#delete-delete_file_manager_folders_folder_id</Documentation>
+			</Delete>
+		</Resource>
+
+		<Resource Name="List" Template="Base" Properties="{{={ readList: 'lists' } }}">
+			<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/</Documentation>
+
+			<Fields>
+				<Field Name="id" Template="ShortText" IsKey="true" />
+				<Field Name="web_id" DataType="DT_I4" ReadOnly="true" />
+				<Field Name="name" Template="ShortText" />
+				<Field Name="contact">
+					<Component Name="company" Template="ShortText" />
+					<Component Name="address1" Template="ShortText" />
+					<Component Name="address2" Template="ShortText" />
+					<Component Name="city" Template="ShortText" />
+					<Component Name="state" Template="ShortText" />
+					<Component Name="zip" Template="ShortText" />
+					<Component Name="country" Template="ShortText" />
+					<Component Name="phone" Template="ShortText" />
+				</Field>
+				<Field Name="permission_reminder" Template="ShortText" />
+				<Field Name="use_archive_bar" DataType="DT_BOOL" />
+				<Field Name="campaign_defaults">
+					<Component Name="from_name" Template="ShortText" />
+					<Component Name="from_email" Template="ShortText" />
+					<Component Name="subject" Template="ShortText" />
+					<Component Name="language" Template="ShortText" />
+				</Field>
+				<Field Name="notify_on_subscribe" Template="ShortText" />
+				<Field Name="notify_on_unsubscribe" Template="ShortText" />
+				<Field Name="date_created" Template="DateTime" ReadOnly="true" />
+				<Field Name="list_rating" DataType="DT_I4" ReadOnly="true" />
+				<Field Name="email_type_option" DataType="DT_BOOL" />
+				<Field Name="subscribe_url_short" Template="ShortText" ReadOnly="true" />
+				<Field Name="subscribe_url_long" Template="ShortText" ReadOnly="true" />
+				<Field Name="beamer_address" Template="ShortText" ReadOnly="true" />
+				<Field Name="visibility" Template="ShortText" />
+				<Field Name="modules" Template="LongText" Composite="true" ReadOnly="true" />
+				<Field Name="stats" ReadOnly="true">
+					<Component Name="member_count" DataType="DT_I4" />
+					<Component Name="unsubscribe_count" DataType="DT_I4" />
+					<Component Name="cleaned_count" DataType="DT_I4" />
+					<Component Name="member_count_since_send" DataType="DT_I4" />
+					<Component Name="unsubscribe_count_since_send" DataType="DT_I4" />
+					<Component Name="cleaned_count_since_send" DataType="DT_I4" />
+					<Component Name="campaign_count" DataType="DT_I4" />
+					<Component Name="campaign_last_sent" Template="DateTime" />
+					<Component Name="merge_field_count" DataType="DT_I4" />
+					<Component Name="avg_sub_rate" DataType="DT_R8" />
+					<Component Name="avg_unsub_rate" DataType="DT_R8" />
+					<Component Name="target_sub_rate" DataType="DT_R8" />
+					<Component Name="open_rate" DataType="DT_R8" />
+					<Component Name="click_rate" DataType="DT_R8" />
+					<Component Name="last_sub_date" Template="DateTime" />
+					<Component Name="last_unsub_date" Template="DateTime" />
+				</Field>
+				<Field Name="_links" IsArray="true" Template="Link" ReadOnly="true" />
+				<Field Name="activity" IsArray="true" ReadOnly="true">
+					<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/activity/</Documentation>
+
+					<Get Url="/lists/{{=item.id}}/activity">
+						<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/activity/#read-get_lists_list_id_activity</Documentation>
+					</Get>
+
+					<Component Name="day" Template="DateTime" />
+					<Component Name="emails_sent" DataType="DT_I4" />
+					<Component Name="unique_opens" DataType="DT_I4" />
+					<Component Name="recipient_clicks" DataType="DT_I4" />
+					<Component Name="hard_bounce" DataType="DT_I4" />
+					<Component Name="soft_bounce" DataType="DT_I4" />
+					<Component Name="subs" DataType="DT_I4" />
+					<Component Name="unsubs" DataType="DT_I4" />
+					<Component Name="other_adds" DataType="DT_I4" />
+					<Component Name="other_removes" DataType="DT_I4" />
+					<Component Name="_links" IsArray="true" Template="Link" />
+				</Field>
+				<Field Name="clients" IsArray="true" ReadOnly="true">
+					<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/clients/</Documentation>
+
+					<Get Url="/lists/{{=item.id}}/clients">
+						<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/clients/#read-get_lists_list_id_clients</Documentation>
+					</Get>
+
+					<Component Name="client" Template="ShortText" />
+					<Component Name="members" DataType="DT_I4" />
+				</Field>
+				<Field Name="growth-history" IsArray="true" ReadOnly="true">
+					<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/growth-history/</Documentation>
+
+					<Get Url="/lists/{{=item.id}}/growth-history" Value="{{=response.history}}">
+						<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/growth-history/#read-get_lists_list_id_growth_history</Documentation>
+					</Get>
+
+					<Component Name="list_id" Template="ShortText" />
+					<Component Name="month" Template="ShortText" />
+					<Component Name="existing" DataType="DT_I4" />
+					<Component Name="imports" DataType="DT_I4" />
+					<Component Name="optins" DataType="DT_I4" />
+					<Component Name="_links" IsArray="true" Template="Link" />
+				</Field>
+				<Field Name="locations" IsArray="true" ReadOnly="true">
+					<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/locations/</Documentation>
+
+					<Get Url="/lists/{{=item.id}}/locations">
+						<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/locations/#read-get_lists_list_id_locations</Documentation>
+					</Get>
+
+					<Component Name="country" Template="ShortText" />
+					<Component Name="cc" Template="ShortText" />
+					<Component Name="percent" DataType="DT_R8" />
+					<Component Name="total" DataType="DT_I4" />
+				</Field>
+			</Fields>
+
+			<Read Url="/lists">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/#read-get_lists</Documentation>
+			</Read>
+
+			<Create Url="/lists">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/#create-post_lists</Documentation>
+			</Create>
+
+			<Update Url="/lists/{{=item.id}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/#edit-patch_lists_list_id</Documentation>
+			</Update>
+
+			<Delete Url="/lists/{{=item.id}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/#delete-delete_lists_list_id</Documentation>
+			</Delete>
+		</Resource>
+
+		<Resource Name="List Member" Template="Base" Properties="{{={ readList: 'members' } }}">
+			<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/members/</Documentation>
+
+			<Fields>
+				<Field Name="id" Template="ShortText" IsKey="true" />
+				<Field Name="email_address" Template="ShortText" IsKey="true" />
+				<Field Name="unique_email_id" Template="ShortText" />
+				<Field Name="email_type" Template="ShortText" />
+				<Field Name="status" Template="ShortText" />
+				<Field Name="unsubscribe_reason" Template="ShortText" />
+				<Field Name="interests" Template="LongText" Composite="true" />
+				<Field Name="stats" ReadOnly="true">
+					<Component Name="avg_open_rate" DataType="DT_R8" />
+					<Component Name="avg_click_rate" DataType="DT_R8" />
+				</Field>
+				<Field Name="ip_signup" Template="ShortText" ReadOnly="true" />
+				<Field Name="timestamp_signup" Template="DateTime" ReadOnly="true" />
+				<Field Name="ip_opt" Template="ShortText" ReadOnly="true" />
+				<Field Name="timestamp_opt" Template="DateTime" ReadOnly="true" />
+				<Field Name="member_rating" DataType="DT_I4" ReadOnly="true" />
+				<Field Name="last_changed" Template="DateTime" ReadOnly="true" />
+				<Field Name="language" Template="ShortText" />
+				<Field Name="vip" DataType="DT_BOOL" />
+				<Field Name="email_client" Template="ShortText" ReadOnly="true" />
+				<Field Name="location" Template="LocationT" />
+				<Field Name="last_note" Template="LastNote" ReadOnly="true" />
+				<Field Name="list_id" Template="ShortText" IsKey="true" />
+				<Field Name="_links" IsArray="true" Template="Link" ReadOnly="true" />
+				<Field Name="activity" IsArray="true" ReadOnly="true">
+					<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/members/activity/</Documentation>
+
+					<Get Url="/lists/{{=item.list_id}}/members/{{=item.email_address &amp;&amp; md5(item.email_address.toLowerCase())}}/activity">
+						<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/members/activity/#read-get_lists_list_id_members_subscriber_hash_activity</Documentation>
+					</Get>
+
+					<Component Name="action" Template="ShortText" />
+					<Component Name="timestamp" Template="DateTime" />
+					<Component Name="url" Template="ShortText" />
+					<Component Name="type" Template="ShortText" />
+					<Component Name="campaign_id" Template="ShortText" />
+					<Component Name="title" Template="ShortText" />
+					<Component Name="parent_campaign" Template="ShortText" />
+				</Field>
+				<Field Name="goals" IsArray="true" ReadOnly="true">
+					<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/members/goals/</Documentation>
+
+					<Get Url="/lists/{{=item.list_id}}/members/{{=item.email_address &amp;&amp; md5(item.email_address.toLowerCase())}}/goals">
+						<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/members/goals/#read-get_lists_list_id_members_subscriber_hash_goals</Documentation>
+					</Get>
+
+					<Component Name="goal_id" DataType="DT_I4" />
+					<Component Name="event" Template="ShortText" />
+					<Component Name="last_visited_at" Template="DateTime" />
+					<Component Name="data" Template="LongText" />
+				</Field>
+				<Field Name="notes" IsArray="true" Template="MemberNote" ReadOnly="true">
+					<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/members/notes/</Documentation>
+
+					<Get Url="/lists/{{=item.list_id}}/members/{{=item.email_address &amp;&amp; md5(item.email_address.toLowerCase())}}/notes">
+						<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/members/notes/#read-get_lists_list_id_members_subscriber_hash_notes</Documentation>
+					</Get>
+				</Field>
+
+				<External List="{{=connection.resourceManager['List Merge Field'].getData({
+					fields: ['tag', 'type', 'options', 'options.size'],
+					batchSize: 100,
+					parameters: ['list_id=' + parameters.list_id]
+				})}}">
+
+					<Field Name="merge_fields.{{=external.tag}}" DataType="{{=Mailchimp.getDataType(external.type)}}" Length="{{=(external.options &amp;&amp; external.options.size) || 255}}" />
+				</External>
+			</Fields>
+
+			<Read Url="/lists/{{=parameters.list_id}}/members">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/members/#read-get_lists_list_id_members</Documentation>
+
+				<User>
+					<Parameter Name="list_id">
+						<Documentation>Required. Specify list identifier.</Documentation>
+					</Parameter>
+				</User>
+			</Read>
+
+			<Read Id="search_exact" Url="/search-members" Result="{{=response.exact_matches.members}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/search-members/</Documentation>
+
+				<Parameters>
+					<Parameter Name="query" Value="{{=parameters.search}}" />
+					<Parameter Name="list_id" Value="{{=parameters.list_id}}" />
+				</Parameters>
+
+				<User>
+					<Parameter Name="search">
+						<Documentation>Required. Specify search query (alias for "query").</Documentation>
+					</Parameter>
+					<Parameter Name="list_id">
+						<Documentation>Required. Specify list identifier.</Documentation>
+					</Parameter>
+				</User>
+			</Read>
+
+			<Read Id="search_full" Url="/search-members" Result="{{=response.full_search.members}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/search-members/</Documentation>
+
+				<Parameters>
+					<Parameter Name="query" Value="{{=parameters.search}}" />
+					<Parameter Name="list_id" Value="{{=parameters.list_id}}" />
+				</Parameters>
+
+				<User>
+					<Parameter Name="search">
+						<Documentation>Required. Specify search query (alias for "query").</Documentation>
+					</Parameter>
+					<Parameter Name="list_id">
+						<Documentation>Required. Specify list identifier.</Documentation>
+					</Parameter>
+				</User>
+			</Read>
+
+			<Create Url="/lists/{{=parameters.list_id}}" BatchLimit="500" Result="{{=Mailchimp.getActionResult(batch, response.new_members, response.errors)}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/</Documentation>
+
+				<Parameters>
+					<Parameter Name="application/json" Value="{{={ members: batch } }}" Type="Body" />
+				</Parameters>
+
+				<ErrorHandling List="{{=item.error &amp;&amp; [item]}}" Code="" ErrorMessage="{{=item.error}}" />
+
+				<User>
+					<Parameter Name="list_id">
+						<Documentation>Required. Specify list identifier.</Documentation>
+					</Parameter>
+				</User>
+			</Create>
+
+			<Update Url="/lists/{{=parameters.list_id}}" BatchLimit="500" Method="POST" Result="{{=Mailchimp.getActionResult(batch, response.updated_members, response.errors)}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/</Documentation>
+
+				<Parameters>
+					<Parameter Name="application/json" Value="{{={ members: batch, update_existing: true } }}" Type="Body" />
+				</Parameters>
+
+				<ErrorHandling List="{{=item.error &amp;&amp; [item]}}" Code="" ErrorMessage="{{=item.error}}" />
+
+				<User>
+					<Parameter Name="list_id">
+						<Documentation>Required. Specify list identifier.</Documentation>
+					</Parameter>
+				</User>
+			</Update>
+
+			<Delete Url="/lists/{{=item.list_id}}/members/{{=item.email_address &amp;&amp; md5(item.email_address.toLowerCase())}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/members/#delete-delete_lists_list_id_members_subscriber_hash</Documentation>
+			</Delete>
+		</Resource>
+
+		<Resource Name="List Member Note" Template="Base" Properties="{{={ readList: 'notes' } }}">
+			<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/members/notes/</Documentation>
+
+			<Fields Template="MemberNote">
+				<Field Name="email_address" Template="ShortText" IsKey="true" />
+			</Fields>
+
+			<Read Url="/lists/{{=parameters.list_id}}/members/{{=md5(parameters.email_address.toLowerCase())}}/notes">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/members/notes/#read-get_lists_list_id_members_subscriber_hash_notes</Documentation>
+
+				<User>
+					<Parameter Name="list_id">
+						<Documentation>Required. Specify list identifier.</Documentation>
+					</Parameter>
+					<Parameter Name="email_address">
+						<Documentation>Required. Specify member email address.</Documentation>
+					</Parameter>
+				</User>
+			</Read>
+
+			<Create Url="/lists/{{=item.list_id}}/members/{{=item.email_address &amp;&amp; md5(item.email_address.toLowerCase())}}/notes">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/members/notes/#create-post_lists_list_id_members_subscriber_hash_notes</Documentation>
+			</Create>
+
+			<Update Url="/lists/{{=item.list_id}}/members/{{=item.email_address &amp;&amp; md5(item.email_address.toLowerCase())}}/notes/{{=item.id}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/members/notes/#edit-patch_lists_list_id_members_subscriber_hash_notes_note_id</Documentation>
+			</Update>
+
+			<Delete Url="/lists/{{=item.list_id}}/members/{{=item.email_address &amp;&amp; md5(item.email_address.toLowerCase())}}/notes/{{=item.id}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/members/notes/#delete-delete_lists_list_id_members_subscriber_hash_notes_note_id</Documentation>
+			</Delete>
+		</Resource>
+
+		<Resource Name="List Abuse Report" Template="Base" Properties="{{={ readList: 'abuse_reports' } }}">
+			<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/abuse-reports/</Documentation>
+
+			<Fields Template="AbuseReport" />
+
+			<Read Url="/lists/{{=parameters.list_id}}/abuse-reports">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/abuse-reports/#read-get_lists_list_id_abuse_reports</Documentation>
+
+				<User>
+					<Parameter Name="list_id">
+						<Documentation>Required. Specify list identifier.</Documentation>
+					</Parameter>
+				</User>
+			</Read>
+		</Resource>
+
+		<Resource Name="List Interest Category" Template="Base" Properties="{{={ readList: 'categories' } }}">
+			<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/interest-categories/</Documentation>
+
+			<Fields>
+				<Field Name="id" Template="ShortText" IsKey="true" />
+				<Field Name="list_id" Template="ShortText" IsKey="true" />
+				<Field Name="title" Template="ShortText" />
+				<Field Name="display_order" DataType="DT_I4" />
+				<Field Name="type" Template="ShortText" />
+				<Field Name="_links" IsArray="true" Template="Link" ReadOnly="true" />
+			</Fields>
+
+			<Read Url="/lists/{{=parameters.list_id}}/interest-categories">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/interest-categories/#read-get_lists_list_id_interest_categories</Documentation>
+
+				<User>
+					<Parameter Name="list_id">
+						<Documentation>Required. Specify list identifier.</Documentation>
+					</Parameter>
+				</User>
+			</Read>
+
+			<Create Url="/lists/{{=item.list_id}}/interest-categories">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/interest-categories/#create-post_lists_list_id_interest_categories</Documentation>
+			</Create>
+
+			<Update Url="/lists/{{=item.list_id}}/interest-categories/{{=item.id}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/interest-categories/#edit-patch_lists_list_id_interest_categories_interest_category_id</Documentation>
+			</Update>
+
+			<Delete Url="/lists/{{=item.list_id}}/interest-categories/{{=item.id}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/interest-categories/#delete-delete_lists_list_id_interest_categories_interest_category_id</Documentation>
+			</Delete>
+		</Resource>
+
+		<Resource Name="List Interest Category Interest" Template="Base" Properties="{{={ readList: 'interests' } }}">
+			<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/interest-categories/interests/</Documentation>
+
+			<Fields>
+				<Field Name="id" Template="ShortText" IsKey="true" />
+				<Field Name="category_id" Template="ShortText" IsKey="true" />
+				<Field Name="list_id" Template="ShortText" IsKey="true" />
+				<Field Name="name" Template="ShortText" />
+				<Field Name="subscriber_count" DataType="DT_I4" ReadOnly="true" />
+				<Field Name="display_order" DataType="DT_I4" />
+				<Field Name="_links" IsArray="true" Template="Link" ReadOnly="true" />
+			</Fields>
+
+			<Read Url="/lists/{{=parameters.list_id}}/interest-categories/{{=parameters.category_id}}/interests">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/interest-categories/interests/</Documentation>
+
+				<User>
+					<Parameter Name="list_id">
+						<Documentation>Required. Specify list identifier.</Documentation>
+					</Parameter>
+					<Parameter Name="category_id">
+						<Documentation>Required. Specify category identifier.</Documentation>
+					</Parameter>
+				</User>
+			</Read>
+
+			<Create Url="/lists/{{=item.list_id}}/interest-categories/{{=item.category_id}}/interests">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/interest-categories/interests/#create-post_lists_list_id_interest_categories_interest_category_id_interests</Documentation>
+			</Create>
+
+			<Update Url="/lists/{{=item.list_id}}/interest-categories/{{=item.category_id}}/interests/{{=item.id}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/interest-categories/interests/#edit-patch_lists_list_id_interest_categories_interest_category_id_interests_interest_id</Documentation>
+			</Update>
+
+			<Delete Url="/lists/{{=item.list_id}}/interest-categories/{{=item.category_id}}/interests/{{=item.id}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/interest-categories/interests/#delete-delete_lists_list_id_interest_categories_interest_category_id_interests_interest_id</Documentation>
+			</Delete>
+		</Resource>
+
+		<Resource Name="List Merge Field" Template="Base" Properties="{{={ readList: 'merge_fields' } }}">
+			<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/merge-fields/</Documentation>
+
+			<Fields>
+				<Field Name="merge_id" DataType="DT_I4" IsKey="true" />
+				<Field Name="list_id" Template="ShortText" IsKey="true" />
+				<Field Name="tag" Template="ShortText" />
+				<Field Name="name" Template="ShortText" />
+				<Field Name="type" Template="ShortText" />
+				<Field Name="required" DataType="DT_BOOL" />
+				<Field Name="default_value" Template="ShortText" />
+				<Field Name="public" DataType="DT_BOOL" />
+				<Field Name="display_order" DataType="DT_I4" />
+				<Field Name="options">
+					<Component Name="default_country" DataType="DT_I4" />
+					<Component Name="phone_format" Template="ShortText" />
+					<Component Name="date_format" Template="ShortText" />
+					<Component Name="choices" Template="LongText" Composite="true" />
+					<Component Name="size" DataType="DT_I4" />
+				</Field>
+				<Field Name="help_text" Template="ShortText" />
+				<Field Name="_links" IsArray="true" Template="Link" ReadOnly="true" />
+			</Fields>
+
+			<Read Url="/lists/{{=parameters.list_id}}/merge-fields">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/merge-fields/#read-get_lists_list_id_merge_fields</Documentation>
+
+				<User>
+					<Parameter Name="list_id">
+						<Documentation>Required. Specify list identifier.</Documentation>
+					</Parameter>
+				</User>
+			</Read>
+
+			<Create Url="/lists/{{=item.list_id}}/merge-fields">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/merge-fields/#create-post_lists_list_id_merge_fields</Documentation>
+			</Create>
+
+			<Update Url="/lists/{{=item.list_id}}/merge-fields/{{=item.merge_id}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/merge-fields/#edit-patch_lists_list_id_merge_fields_merge_id</Documentation>
+			</Update>
+
+			<Delete Url="/lists/{{=item.list_id}}/merge-fields/{{=item.merge_id}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/merge-fields/#delete-delete_lists_list_id_merge_fields_merge_id</Documentation>
+			</Delete>
+		</Resource>
+
+		<Resource Name="List Segment" Template="Base" Properties="{{={ readList: 'segments' } }}">
+			<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/segments/</Documentation>
+
+			<Fields>
+				<Field Name="id" DataType="DT_I4" IsKey="true" />
+				<Field Name="list_id" Template="ShortText" IsKey="true" />
+				<Field Name="name" Template="ShortText" />
+				<Field Name="member_count" DataType="DT_I4" ReadOnly="true" />
+				<Field Name="type" Template="ShortText" ReadOnly="true" />
+				<Field Name="created_at" Template="DateTime" ReadOnly="true" />
+				<Field Name="updated_at" Template="DateTime" ReadOnly="true" />
+				<Field Name="options">
+					<Component Name="match" Template="ShortText" />
+					<Component Name="conditions" IsArray="true">
+						<Component Name="condition_type" Template="ShortText" />
+						<Component Name="Aim" Template="RegularCondition" />
+						<Component Name="Automation" Template="RegularCondition" />
+						<Component Name="CampaignPoll" Template="RegularCondition" />
+						<Component Name="Conversation" Template="RegularCondition" />
+						<Component Name="Date" Template="RegularCondition">
+							<Component Name="extra" Template="ShortText" />
+						</Component>
+						<Component Name="EmailClient" Template="RegularCondition" />
+						<Component Name="Language" Template="RegularCondition" />
+						<Component Name="Mandrill">
+							<Component Name="op" Template="ShortText" />
+							<Component Name="field" Template="ShortText" />
+						</Component>
+						<Component Name="MemberRating" Template="RegularCondition" />
+						<Component Name="SignupSource" Template="RegularCondition" />
+						<Component Name="SurveyMonkey" Template="RegularCondition" />
+						<Component Name="VIP">
+							<Component Name="op" Template="ShortText" />
+							<Component Name="field" Template="ShortText" />
+						</Component>
+						<Component Name="Interests" Template="RegularCondition" />
+						<Component Name="EcommCategory" Template="RegularCondition" />
+						<Component Name="EcommNumber" Template="RegularCondition" />
+						<Component Name="EcommPurchased" Template="RegularCondition">
+							<Component Name="op" Template="ShortText" />
+							<Component Name="field" Template="ShortText" />
+						</Component>
+						<Component Name="EcommSpent" Template="RegularCondition" />
+						<Component Name="EcommStore" Template="RegularCondition" />
+						<Component Name="GoalActivity" Template="RegularCondition" />
+						<Component Name="GoalTimestamp" Template="RegularCondition">
+							<Component Name="extra" Template="ShortText" />
+						</Component>
+						<Component Name="FuzzySegment" Template="RegularCondition" />
+						<Component Name="StaticSegment" Template="RegularCondition" />
+						<Component Name="IPGeoCountryState" Template="RegularCondition" />
+						<Component Name="IPGeoIn" Template="RegularCondition">
+							<Component Name="lng" Template="ShortText" />
+							<Component Name="addr" Template="ShortText" />
+							<Component Name="lat" Template="ShortText" />
+						</Component>
+						<Component Name="IPGeoInZip" Template="RegularCondition">
+							<Component Name="extra" Template="ShortText" />
+						</Component>
+						<Component Name="IPGeoUnknown">
+							<Component Name="op" Template="ShortText" />
+							<Component Name="field" Template="ShortText" />
+						</Component>
+						<Component Name="IPGeoZip" Template="RegularCondition" />
+						<Component Name="SocialAge" Template="RegularCondition" />
+						<Component Name="SocialGender" Template="RegularCondition" />
+						<Component Name="SocialInfluence" Template="RegularCondition" />
+						<Component Name="SocialNetworkMember" Template="RegularCondition" />
+						<Component Name="SocialNetworkFollow" Template="RegularCondition" />
+						<Component Name="AddressMerge" Template="RegularCondition" />
+						<Component Name="ZipMerge" Template="RegularCondition">
+							<Component Name="extra" Template="ShortText" />
+						</Component>
+						<Component Name="BirthdayMerge" Template="RegularCondition" />
+						<Component Name="DateMerge" Template="RegularCondition" />
+						<Component Name="TextMerge" Template="RegularCondition" />
+						<Component Name="SelectMerge" Template="RegularCondition" />
+						<Component Name="EmailAddress" Template="RegularCondition" />
+					</Component>
+				</Field>
+				<Field Name="_links" IsArray="true" Template="Link" ReadOnly="true" />
+				<Field Name="static_segment" Template="LongText" Composite="true" />
+			</Fields>
+
+			<Read Url="/lists/{{=parameters.list_id}}/segments">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/segments/#read-get_lists_list_id_segments</Documentation>
+
+				<User>
+					<Parameter Name="list_id">
+						<Documentation>Required. Specify list identifier.</Documentation>
+					</Parameter>
+				</User>
+			</Read>
+
+			<Create Url="/lists/{{=item.list_id}}/segments">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/segments/#create-post_lists_list_id_segments</Documentation>
+			</Create>
+
+			<Update Url="/lists/{{=item.list_id}}/segments/{{=item.id}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/segments/#edit-patch_lists_list_id_segments_segment_id</Documentation>
+			</Update>
+
+			<Delete Url="/lists/{{=item.list_id}}/segments/{{=item.id}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/segments/#delete-delete_lists_list_id_segments_segment_id</Documentation>
+			</Delete>
+		</Resource>
+
+		<Resource Name="List Segment Member" Template="Base" Properties="{{={ readList: 'members' } }}">
+			<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/segments/members/</Documentation>
+
+			<Fields>
+				<Field Name="id" Template="ShortText" IsKey="true" />
+				<Field Name="segment_id" DataType="DT_I4" IsKey="true" />
+				<Field Name="list_id" Template="ShortText" IsKey="true" />
+				<Field Name="email_address" Template="ShortText" IsKey="true" />
+				<Field Name="unique_email_id" Template="ShortText" ReadOnly="true" />
+				<Field Name="email_type" Template="ShortText" ReadOnly="true" />
+				<Field Name="status" Template="ShortText" ReadOnly="true" />
+				<Field Name="interests" Template="LongText" Composite="true" ReadOnly="true" />
+				<Field Name="stats" ReadOnly="true">
+					<Component Name="avg_open_rate" DataType="DT_R8" />
+					<Component Name="avg_click_rate" DataType="DT_R8" />
+				</Field>
+				<Field Name="ip_signup" Template="ShortText" ReadOnly="true" />
+				<Field Name="timestamp_signup" Template="DateTime" ReadOnly="true" />
+				<Field Name="ip_opt" Template="ShortText" ReadOnly="true" />
+				<Field Name="timestamp_opt" Template="DateTime" ReadOnly="true" />
+				<Field Name="member_rating" DataType="DT_I4" ReadOnly="true" />
+				<Field Name="last_changed" Template="DateTime" ReadOnly="true" />
+				<Field Name="language" Template="ShortText" />
+				<Field Name="vip" DataType="DT_BOOL" />
+				<Field Name="email_client" Template="ShortText" />
+				<Field Name="location" Template="LocationT" />
+				<Field Name="last_note" Template="LastNote" ReadOnly="true" />
+
+				<External List="{{=connection.resourceManager['List Merge Field'].getData({
+					fields: ['tag', 'type', 'options', 'options.size'],
+					batchSize: 100,
+					parameters: ['list_id=' + parameters.list_id]
+				})}}">
+
+					<Field Name="merge_fields.{{=external.tag}}" DataType="{{=Mailchimp.getDataType(external.type)}}" Length="{{=(external.options &amp;&amp; external.options.size) || 255}}" />
+				</External>
+			</Fields>
+
+			<Read Url="/lists/{{=parameters.list_id}}/segments/{{=parameters.segment_id}}/members">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/segments/members/#read-get_lists_list_id_segments_segment_id_members</Documentation>
+
+				<User>
+					<Parameter Name="list_id">
+						<Documentation>Required. Specify list identifier.</Documentation>
+					</Parameter>
+					<Parameter Name="segment_id">
+						<Documentation>Required. Specify segment identifier.</Documentation>
+					</Parameter>
+				</User>
+			</Read>
+
+			<Create Url="/lists/{{=parameters.list_id}}/segments/{{=parameters.segment_id}}" BatchLimit="500" Result="{{=Mailchimp.getActionResult(batch, response.members_added, response.errors)}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/segments/#create-post_lists_list_id_segments</Documentation>
+
+				<Parameters>
+					<Parameter Name="application/json" Value="{{={ members_to_add: _.pluck(batch, 'email_address') } }}" Type="Body" />
+				</Parameters>
+
+				<ErrorHandling List="{{=item.error &amp;&amp; [item]}}" Code="" ErrorMessage="{{=item.error}}" />
+
+				<User>
+					<Parameter Name="list_id">
+						<Documentation>Required. Specify list identifier.</Documentation>
+					</Parameter>
+					<Parameter Name="segment_id">
+						<Documentation>Required. Specify segment identifier.</Documentation>
+					</Parameter>
+				</User>
+			</Create>
+
+			<Delete Url="/lists/{{=parameters.list_id}}/segments/{{=parameters.segment_id}}" BatchLimit="500" Result="{{=Mailchimp.getActionResult(batch, response.members_removed, response.errors)}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/segments/#create-post_lists_list_id_segments</Documentation>
+
+				<Parameters>
+					<Parameter Name="application/json" Value="{{={ members_to_remove: _.pluck(batch, 'email_address') } }}" Type="Body" />
+				</Parameters>
+
+				<ErrorHandling List="{{=item.error &amp;&amp; [item]}}" Code="" ErrorMessage="{{=item.error}}" />
+
+				<User>
+					<Parameter Name="list_id">
+						<Documentation>Required. Specify list identifier.</Documentation>
+					</Parameter>
+					<Parameter Name="segment_id">
+						<Documentation>Required. Specify segment identifier.</Documentation>
+					</Parameter>
+				</User>
+			</Delete>
+		</Resource>
+
+		<Resource Name="List Signup Form" Template="Base" Properties="{{={ readList: 'signup_forms' } }}">
+			<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/signup-forms/</Documentation>
+
+			<Fields>
+				<Field Name="list_id" Template="ShortText" IsKey="true" />
+				<Field Name="header">
+					<Component Name="image_url" Template="ShortText" />
+					<Component Name="text" Template="ShortText" />
+					<Component Name="image_width" Template="ShortText" />
+					<Component Name="image_height" Template="ShortText" />
+					<Component Name="image_alt" Template="ShortText" />
+					<Component Name="image_link" Template="ShortText" />
+					<Component Name="image_align" Template="ShortText" />
+					<Component Name="image_border_width" Template="ShortText" />
+					<Component Name="image_border_style" Template="ShortText" />
+					<Component Name="image_border_color" Template="ShortText" />
+					<Component Name="image_target" Template="ShortText" />
+				</Field>
+				<Field Name="contents" IsArray="true">
+					<Component Name="section" Template="ShortText" />
+					<Component Name="value" Template="LongText" />
+				</Field>
+				<Field Name="styles" IsArray="true">
+					<Component Name="selector" Template="ShortText" />
+					<Component Name="options" IsArray="true">
+						<Component Name="property" Template="ShortText" />
+						<Component Name="value" Template="ShortText" />
+					</Component>
+				</Field>
+				<Field Name="signup_form_url" Template="ShortText" />
+				<Field Name="_links" IsArray="true" Template="Link" ReadOnly="true" />
+			</Fields>
+
+			<Read Url="/lists/{{=parameters.list_id}}/signup-forms">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/signup-forms/#read-get_lists_list_id_signup_forms</Documentation>
+
+				<User>
+					<Parameter Name="list_id">
+						<Documentation>Required. Specify list identifier.</Documentation>
+					</Parameter>
+				</User>
+			</Read>
+
+			<Create Url="/lists/{{=item.list_id}}/signup-forms">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/signup-forms/#create-post_lists_list_id_signup_forms</Documentation>
+			</Create>
+		</Resource>
+
+		<Resource Name="List Webhook" Template="Base" Properties="{{={ readList: 'webhooks' } }}">
+			<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/webhooks/</Documentation>
+
+			<Fields>
+				<Field Name="id" Template="ShortText" IsKey="true" />
+				<Field Name="list_id" Template="ShortText" IsKey="true" />
+				<Field Name="url" Template="ShortText" ReadOnly="true" />
+				<Field Name="events">
+					<Component Name="subscribe" DataType="DT_BOOL" />
+					<Component Name="unsubscribe" DataType="DT_BOOL" />
+					<Component Name="profile" DataType="DT_BOOL" />
+					<Component Name="cleaned" DataType="DT_BOOL" />
+					<Component Name="upemail" DataType="DT_BOOL" />
+					<Component Name="campaign" DataType="DT_BOOL" />
+				</Field>
+				<Field Name="sources">
+					<Component Name="user" DataType="DT_BOOL" />
+					<Component Name="admin" DataType="DT_BOOL" />
+					<Component Name="api" DataType="DT_BOOL" />
+				</Field>
+				<Field Name="_links" IsArray="true" Template="Link" ReadOnly="true" />
+			</Fields>
+
+			<Read Url="/lists/{{=parameters.list_id}}/webhooks">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/webhooks/#read-get_lists_list_id_webhooks</Documentation>
+
+				<User>
+					<Parameter Name="list_id">
+						<Documentation>Required. Specify list identifier.</Documentation>
+					</Parameter>
+				</User>
+			</Read>
+
+			<Create Url="/lists/{{=item.list_id}}/webhooks">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/webhooks/#create-post_lists_list_id_webhooks</Documentation>
+			</Create>
+
+			<Update Url="/lists/{{=item.list_id}}/webhooks/{{=item.id}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/webhooks/#edit-patch_lists_list_id_webhooks_webhook_id</Documentation>
+			</Update>
+
+			<Delete Url="/lists/{{=item.list_id}}/webhooks/{{=item.id}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/lists/webhooks/#delete-delete_lists_list_id_webhooks_webhook_id</Documentation>
+			</Delete>
+		</Resource>
+
+		<Resource Name="Report" Template="Base" Properties="{{={ readList: 'reports' } }}">
+			<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/reports/</Documentation>
+
+			<Fields Template="ReportT">
+				<Field Name="abuse_reports" IsArray="true" Template="AbuseReport">
+					<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/reports/abuse-reports/</Documentation>
+
+					<Get Url="/reports/{{=item.id}}/abuse-reports">
+						<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/reports/abuse-reports/#read-get_reports_campaign_id_abuse_reports</Documentation>
+					</Get>
+				</Field>
+				<Field Name="advice" IsArray="true">
+					<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/reports/advice/</Documentation>
+
+					<Get Url="/reports/{{=item.id}}/advice">
+						<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/reports/advice/#read-get_reports_campaign_id_advice</Documentation>
+					</Get>
+
+					<Component Name="type" Template="ShortText" />
+					<Component Name="message" Template="ShortText" />
+					<Component Name="_links" IsArray="true" Template="Link" />
+				</Field>
+				<Field Name="click-details" IsArray="true">
+					<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/reports/click-details/</Documentation>
+
+					<Get Url="/reports/{{=item.id}}/click-details" Value="{{=response.urls_clicked}}">
+						<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/reports/click-details/#read-get_reports_campaign_id_click_details</Documentation>
+					</Get>
+
+					<Component Name="id" Template="ShortText" />
+					<Component Name="url" Template="ShortText" />
+					<Component Name="total_clicks" DataType="DT_I4" />
+					<Component Name="click_percentage" DataType="DT_R8" />
+					<Component Name="unique_clicks" DataType="DT_I4" />
+					<Component Name="unique_click_percentage" DataType="DT_R8" />
+					<Component Name="last_click" Template="DateTime" />
+					<Component Name="ab_split">
+						<Component Name="a">
+							<Component Name="total_clicks_a" DataType="DT_I4" />
+							<Component Name="click_percentage_a" DataType="DT_R8" />
+							<Component Name="unique_clicks_a" DataType="DT_I4" />
+							<Component Name="unique_click_percentage_a" DataType="DT_R8" />
+						</Component>
+						<Component Name="b">
+							<Component Name="total_clicks_b" DataType="DT_I4" />
+							<Component Name="click_percentage_b" DataType="DT_R8" />
+							<Component Name="unique_clicks_b" DataType="DT_I4" />
+							<Component Name="unique_click_percentage_b" DataType="DT_R8" />
+						</Component>
+					</Component>
+					<Component Name="campaign_id" Template="ShortText" />
+					<Component Name="_links" IsArray="true" Template="Link" />
+					<Component Name="members" IsArray="true">
+						<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/reports/click-details/members/</Documentation>
+
+						<Get Url="/reports/{{=item.id}}/click-details/{{=valueParent.id}}/members">
+							<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/reports/click-details/members/#read-get_reports_campaign_id_click_details_link_id_members</Documentation>
+						</Get>
+
+						<Component Name="email_id" Template="ShortText" />
+						<Component Name="email_address" Template="ShortText" />
+						<Component Name="merge_fields" Template="LongText" Composite="true" />
+						<Component Name="vip" DataType="DT_BOOL" />
+						<Component Name="clicks" DataType="DT_I4" />
+						<Component Name="campaign_id" Template="ShortText" />
+						<Component Name="url_id" Template="ShortText" />
+						<Component Name="list_id" Template="ShortText" />
+						<Component Name="_links" IsArray="true" Template="Link" />
+					</Component>
+				</Field>
+				<Field Name="domains" IsArray="true">
+					<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/reports/domain-performance/</Documentation>
+
+					<Get Url="/reports/{{=item.id}}/domain-performance">
+						<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/reports/domain-performance/#read-get_reports_campaign_id_domain_performance</Documentation>
+					</Get>
+
+					<Component Name="domain" Template="ShortText" />
+					<Component Name="emails_sent" DataType="DT_I4" />
+					<Component Name="bounces" DataType="DT_I4" />
+					<Component Name="opens" DataType="DT_I4" />
+					<Component Name="clicks" DataType="DT_I4" />
+					<Component Name="unsubs" DataType="DT_I4" />
+					<Component Name="delivered" DataType="DT_I4" />
+					<Component Name="emails_pct" DataType="DT_R8" />
+					<Component Name="bounces_pct" DataType="DT_R8" />
+					<Component Name="opens_pct" DataType="DT_R8" />
+					<Component Name="clicks_pct" DataType="DT_R8" />
+					<Component Name="unsubs_pct" DataType="DT_R8" />
+				</Field>
+				<Field Name="eepurl">
+					<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/reports/eepurl/</Documentation>
+
+					<Get Url="/reports/{{=item.id}}/eepurl" Value="{{=response}}">
+						<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/reports/eepurl/#read-get_reports_campaign_id_eepurl</Documentation>
+					</Get>
+
+					<Component Name="eepurl" Template="ShortText" />
+					<Component Name="twitter">
+						<Component Name="tweets" DataType="DT_I4" />
+						<Component Name="first_tweet" Template="DateTime" />
+						<Component Name="last_tweet" Template="DateTime" />
+						<Component Name="retweets" DataType="DT_I4" />
+						<Component Name="statuses" IsArray="true">
+							<Component Name="status" Template="ShortText" />
+							<Component Name="screen_name" Template="ShortText" />
+							<Component Name="status_id" Template="ShortText" />
+							<Component Name="datetime" Template="DateTime" />
+							<Component Name="is_retweet" DataType="DT_BOOL" />
+						</Component>
+					</Component>
+					<Component Name="clicks">
+						<Component Name="clicks" DataType="DT_I4" />
+						<Component Name="first_click" Template="DateTime" />
+						<Component Name="last_click" Template="DateTime" />
+						<Component Name="locations" IsArray="true">
+							<Component Name="country" Template="ShortText" />
+							<Component Name="region" Template="ShortText" />
+						</Component>
+					</Component>
+					<Component Name="referrers" IsArray="true">
+						<Component Name="referrer" Template="ShortText" />
+						<Component Name="clicks" DataType="DT_I4" />
+						<Component Name="first_click" Template="DateTime" />
+						<Component Name="last_click" Template="DateTime" />
+					</Component>
+					<Component Name="campaign_id" Template="ShortText" />
+					<Component Name="_links" IsArray="true" Template="Link" />
+				</Field>
+				<Field Name="emails" IsArray="true">
+					<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/reports/email-activity/</Documentation>
+
+					<Get Url="/reports/{{=item.id}}/email-activity">
+						<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/reports/email-activity/#read-get_reports_campaign_id_email_activity</Documentation>
+					</Get>
+
+					<Component Name="email_id" Template="ShortText" />
+					<Component Name="campaign_id" Template="ShortText" />
+					<Component Name="list_id" Template="ShortText" />
+					<Component Name="email_address" Template="ShortText" />
+					<Component Name="activity" IsArray="true">
+						<Component Name="action" Template="ShortText" />
+						<Component Name="type" Template="ShortText" />
+						<Component Name="timestamp" Template="DateTime" />
+						<Component Name="url" Template="ShortText" />
+						<Component Name="ip" Template="ShortText" />
+					</Component>
+					<Component Name="_links" IsArray="true" Template="Link" />
+				</Field>
+				<Field Name="locations" IsArray="true">
+					<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/reports/locations/</Documentation>
+
+					<Get Url="/reports/{{=item.id}}/locations">
+						<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/reports/locations/#read-get_reports_campaign_id_locations</Documentation>
+					</Get>
+
+					<Component Name="country_code" Template="ShortText" />
+					<Component Name="region" Template="ShortText" />
+					<Component Name="region_name" Template="ShortText" />
+					<Component Name="opens" DataType="DT_I4" />
+				</Field>
+				<Field Name="sent_to" IsArray="true">
+					<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/reports/sent-to/</Documentation>
+
+					<Get Url="/reports/{{=item.id}}/sent-to">
+						<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/reports/sent-to/#read-get_reports_campaign_id_sent_to</Documentation>
+					</Get>
+
+					<Component Name="email_id" Template="ShortText" />
+					<Component Name="campaign_id" Template="ShortText" />
+					<Component Name="list_id" Template="ShortText" />
+					<Component Name="email_address" Template="ShortText" />
+					<Component Name="merge_fields" Template="LongText" Composite="true" />
+					<Component Name="vip" DataType="DT_BOOL" />
+					<Component Name="status" Template="ShortText" />
+					<Component Name="open_count" DataType="DT_I4" />
+					<Component Name="last_open" Template="DateTime" />
+					<Component Name="absplit_group" Template="ShortText" />
+					<Component Name="gmt_offset" DataType="DT_I4" />
+					<Component Name="_links" IsArray="true" Template="Link" />
+				</Field>
+				<Field Name="reports" IsArray="true" Template="ReportT">
+					<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/reports/sub-reports/</Documentation>
+
+					<Get Url="/reports/{{=item.id}}/sub-reports">
+						<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/reports/sub-reports/#read-get_reports_campaign_id_sub_reports</Documentation>
+					</Get>
+				</Field>
+				<Field Name="unsubscribes" IsArray="true">
+					<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/reports/unsubscribed/</Documentation>
+
+					<Get Url="/reports/{{=item.id}}/unsubscribed">
+						<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/reports/unsubscribed/#read-get_reports_campaign_id_unsubscribed</Documentation>
+					</Get>
+
+					<Component Name="email_id" Template="ShortText" />
+					<Component Name="campaign_id" Template="ShortText" />
+					<Component Name="list_id" Template="ShortText" />
+					<Component Name="email_address" Template="ShortText" />
+					<Component Name="merge_fields" Template="LongText" Composite="true" />
+					<Component Name="vip" DataType="DT_BOOL" />
+					<Component Name="timestamp" Template="DateTime" />
+					<Component Name="reason" Template="ShortText" />
+					<Component Name="_links" IsArray="true" Template="Link" />
+				</Field>
+			</Fields>
+
+			<Read Url="/reports">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/reports/#read-get_reports</Documentation>
+			</Read>
+		</Resource>
+
+		<Resource Name="Template Folder" Template="Base" Properties="{{={ readList: 'folders' } }}">
+			<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/template-folders/</Documentation>
+
+			<Fields>
+				<Field Name="id" Template="ShortText" IsKey="true" />
+				<Field Name="name" Template="ShortText" />
+				<Field Name="count" DataType="DT_I4" ReadOnly="true" />
+				<Field Name="_links" IsArray="true" Template="Link" ReadOnly="true" />
+			</Fields>
+
+			<Read Url="/template-folders">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/template-folders/#read-get_template_folders</Documentation>
+			</Read>
+
+			<Create Url="/template-folders">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/template-folders/#create-post_template_folders</Documentation>
+			</Create>
+
+			<Update Url="/template-folders/{{=item.id}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/template-folders/#edit-patch_template_folders_folder_id</Documentation>
+			</Update>
+
+			<Delete Url="/template-folders/{{=item.id}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/template-folders/#delete-delete_template_folders_folder_id</Documentation>
+			</Delete>
+		</Resource>
+
+		<Resource Name="Template" Template="Base" Properties="{{={ readList: 'templates' } }}">
+			<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/templates/</Documentation>
+
+			<Fields>
+				<Field Name="id" Template="ShortText" IsKey="true" />
+				<Field Name="type" Template="ShortText" ReadOnly="true" />
+				<Field Name="name" Template="ShortText" />
+				<Field Name="drag_and_drop" DataType="DT_BOOL" ReadOnly="true" />
+				<Field Name="responsive" DataType="DT_BOOL" ReadOnly="true" />
+				<Field Name="category" Template="ShortText" ReadOnly="true" />
+				<Field Name="date_created" Template="DateTime" ReadOnly="true" />
+				<Field Name="created_by" Template="ShortText" ReadOnly="true" />
+				<Field Name="active" DataType="DT_BOOL" ReadOnly="true" />
+				<Field Name="folder_id" Template="ShortText" />
+				<Field Name="thumbnail" Template="ShortText" ReadOnly="true" />
+				<Field Name="share_url" Template="ShortText" ReadOnly="true" />
+				<Field Name="_links" IsArray="true" Template="Link" ReadOnly="true" />
+				<Field Name="default-content" ReadOnly="true">
+					<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/templates/default-content/</Documentation>
+
+					<Get Url="/templates/{{=item.id}}/default-content">
+						<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/templates/default-content/#read-get_templates_template_id_default_content</Documentation>
+					</Get>
+
+					<Component Name="sections" Template="LongText" Composite="true" />
+					<Component Name="_links" IsArray="true" Template="Link" />
+				</Field>
+				<Field Name="html" Template="LongText" />
+			</Fields>
+
+			<Read Url="/templates">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/templates/#read-get_templates</Documentation>
+			</Read>
+
+			<Create Url="/templates">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/templates/#create-post_templates</Documentation>
+			</Create>
+
+			<Update Url="/templates/{{=item.id}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/templates/#edit-patch_templates_template_id</Documentation>
+			</Update>
+
+			<Delete Url="/templates/{{=item.id}}">
+				<Documentation>http://developer.mailchimp.com/documentation/mailchimp/reference/templates/#delete-delete_templates_template_id</Documentation>
+			</Delete>
+		</Resource>
+	</Resources>
+
+	<FileManager>
+		<Root GetPath="{{={
+				full: Mailchimp.FileManager.getFullPath(path),
+				name: _.last(_.rtrim(path, '/').split('/')),
+				folder: Mailchimp.FileManager.getFullPath(_.initial(_.rtrim(path, '/').split('/')).join('/'))
+			} }}" GetListing="{{=Mailchimp.FileManager.getListing(path.name)}}" UploadFile="{{=connection.resourceManager['File Manager File'].create([{
+				name: toPath.name,
+				file_data: fromStream.readAll(),
+				folder_id: Mailchimp.FileManager.getFolderId(toPath.folder)
+			}])[0].result.size}}" DownloadFile="{{=connection.execute({
+				url: connection.execute({ url: '/file-manager/files/' + Mailchimp.FileManager.getFileId(path.full) }).full_size_url,
+				stream: true
+			})}}" CreateDirectory="{{=path.folder == '' ? connection.resourceManager['File Manager Folder'].create([{ name: path.name }]) : function(){ throw 'Sub-folder not supported.'; }() }}" DeleteDirectory="{{=connection.resourceManager['File Manager Folder'].delete([{ id: Mailchimp.FileManager.getFolderId(path.full) }])}}" DeleteFile="{{=connection.resourceManager['File Manager File'].delete([{ id: Mailchimp.FileManager.getFileId(path.full) }])}}" RenameFile="{{=Mailchimp.FileManager.rename(oldPath, newPath)}}">
+		</Root>
+	</FileManager>
+
+	<Script>
+		<Module Name="Main">
+			<![CDATA[
+require('underscore');
+require('underscore.string')
+_.mixin(s.exports());
+require('md5');
+
+var Mailchimp = {};
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Get Mailchimp field type -> SSIS DataType.
+Mailchimp.typeToDataType = {
+	number: 'DT_R8',
+	date: 'DT_DBDATE',
+	birthday: 'DT_DBDATE'
+};
+Mailchimp.getDataType = function(type) {
+	return Mailchimp.typeToDataType[type] || 'DT_WSTR';
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Get batch result status. Mailchimp returns the result and errors in separate
+// elements which has to be related into one result.
+Mailchimp.getActionResult = function(batch, result, errors) {
+	// Extract action result identifiers.
+	var idDict = {};
+	_.each(result, function(item) {
+		idDict[item.email_address] = item.id;
+	});
+	
+	// Extract action errors.
+	var errDict = {};
+	_.each(errors, function(item) {
+		errDict[item.email_address] = item.email_address + '; ' + item.error;
+	});
+
+	return _.map(batch, function(item) {
+		return {
+			id: idDict[item.email_address],
+			error: errDict[item.email_address]
+		}
+	});
+}
+]]>
+		</Module>
+		<Module Name="FileManager">
+			<![CDATA[
+Mailchimp.FileManager = {};
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Returns full path.
+Mailchimp.FileManager.getFullPath = function(path) {
+	var result = path;
+
+	if (result && result[0] == '/') {
+		result = result.substring(1);
+	}
+
+	return result;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Returns list for specified folder.
+Mailchimp.FileManager.getListing = function(folder) {
+	var result = [];
+
+	folder = folder.trim().toLowerCase().replace('\\', '/');
+	if (folder[folder.length - 1] != '/') {
+		folder += '/';
+	}
+
+	var folderId = Mailchimp.FileManager.getFolderId(folder);
+
+	if (folder == '/') {
+		// Include folder list.
+		_.each(Mailchimp.FileManager.idToFolder, function(item) {
+			if (item.id == 0) {
+				return;
+			}
+
+			result.push({
+				fullName: item.name,
+				modifiedTime: item.created_at,
+				isDirectory: true
+			});
+		});
+	}
+
+	// Include files.
+	Mailchimp.FileManager.getFileId();
+
+	_.each(
+		_.filter(
+			_.values(Mailchimp.FileManager.idToFile),
+			function(item) { return item.folder_id == folderId; }),
+		function(item) {
+			return result.push({
+				fullName: item.name,
+				size: item.size,
+				modifiedTime: item.created_at
+			});
+		}
+	);
+
+	return result;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Returns folder identifier.
+Mailchimp.FileManager.folderToId = undefined;
+Mailchimp.FileManager.idToFolder = undefined;
+Mailchimp.FileManager.getFolderId = function(name) {
+	name = name.trim().toLowerCase().replace('\\', '/');
+	if (name[name.length - 1] != '/') {
+		name += '/';
+	}
+
+	if (Mailchimp.FileManager.folderToId) {
+		return Mailchimp.FileManager.folderToId[name];
+	}
+
+	// Cache folder -> id information.
+	Mailchimp.FileManager.folderToId = {};
+	Mailchimp.FileManager.idToFolder = {};
+
+	// Include root.
+	Mailchimp.FileManager.folderToId['/'] = 0;
+	Mailchimp.FileManager.idToFolder[0] = { id: 0, name: '' };
+
+	var list = connection.resourceManager['File Manager Folder'].getData({
+	   fields: ['id', 'name', 'created_at']
+	});
+	var length = list.length;
+	for (var index = 0; index < length; index++) {
+		var item = list[index];
+		var folder = item.name + '/';
+
+		Mailchimp.FileManager.folderToId[folder.toLowerCase()] = item.id;
+		Mailchimp.FileManager.idToFolder[item.id] = item;
+	}
+
+	return Mailchimp.FileManager.folderToId[name];
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+Mailchimp.FileManager.getFolderName = function(id) {
+	if (!Mailchimp.FileManager.idToFolder) {
+		// Cache folder -> id information.
+		Mailchimp.FileManager.getFolderId();
+	}
+
+	return Mailchimp.FileManager.idToFolder[id].name;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Get file id from name (root/folder/sub-folder/file).
+Mailchimp.FileManager.fileToId = undefined;
+Mailchimp.FileManager.idToFile = undefined;
+Mailchimp.FileManager.getFileId = function(name) {
+	name = name && name.trim().toLowerCase().replace('\\', '/');
+
+	if (Mailchimp.FileManager.fileToId) {
+		return Mailchimp.FileManager.fileToId[name];
+	}
+	
+	// Cache file -> id information.
+	Mailchimp.FileManager.fileToId = {};
+	Mailchimp.FileManager.idToFile = {};
+
+	var list = connection.resourceManager['File Manager File'].getData({
+	   fields: ['id', 'folder_id', 'name', 'size', 'created_at']
+	});
+	var length = list.length;
+	for (var index = 0; index < length; index++) {
+		var item = list[index];
+		var fileName = Mailchimp.FileManager.getFolderName(item.folder_id) + '/' + item.name;
+
+		Mailchimp.FileManager.fileToId[fileName.toLowerCase()] = item.id;
+		Mailchimp.FileManager.idToFile[item.id] = {
+			name: fileName,
+			folder_id: item.folder_id,
+			size: item.size,
+			created_at: item.created_at
+		};
+	}
+
+	return Mailchimp.FileManager.fileToId[name];
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Rename file or folder.
+Mailchimp.FileManager.rename = function(oldPath, newPath) {
+	var newName = newPath.name;
+	var newFolder = newPath.folder;
+
+	var fileId = Mailchimp.FileManager.getFileId(oldPath.full);
+	var folderId = Mailchimp.FileManager.getFolderId(oldPath.full);
+
+	if (fileId) {
+		connection.resourceManager['File Manager File'].update([{
+			id: fileId,
+			name: newPath.name,
+			folder_id: Mailchimp.FileManager.getFolderId(newPath.folder)
+		}]);
+	}
+	else
+	if (folderId) {
+		connection.resourceManager['File Manager Folder'].update([{
+			id: folderId,
+			name: newPath.name
+		}]);
+	}
+	else {
+		throw oldPath.full + ' not found.';
+	}
+}
+]]>
+		</Module>
+	</Script>
+<Signature xmlns="http://www.w3.org/2000/09/xmldsig#"><SignedInfo><CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315" /><SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1" /><Reference URI=""><Transforms><Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature" /></Transforms><DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1" /><DigestValue>7FAA2YY+XyyEHrlAorUzdpMY4Wg=</DigestValue></Reference></SignedInfo><SignatureValue>1ZJJRk+QKRyfFzRc4TLbo9ZUczGoBLtfy+J/lSW0Yy/OJB5KHbBjiJSjl3ADVauAjHUr2kGQllbJSlvoVA0EpLbwu9pOGGvdVAI6q6LRzKy6gG2hfdG8wHYh81hgIdVTufot85wrZiUCUHGEDeOTbOCE4RJOqoucmciVU1xy6tY=</SignatureValue></Signature></ConnectionManager>

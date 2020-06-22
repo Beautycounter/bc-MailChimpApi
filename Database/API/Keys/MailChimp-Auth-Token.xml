@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RestToken xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Configuration>Mailchimp</Configuration>
+  <Token>E2eCesPh4uRURlKC0OzshmI8nrRb6wAxxh3Ek5HE8ZXtPHG6i1d+ED9Flfaj48TcFMLZsOy51Gc+xJDyNw1OQTl6FJVWl0sXrpZEqOH9BPI=</Token>
+  <RefreshToken>E2eCesPh4uRURlKC0OzshmI8nrRb6wAxxh3Ek5HE8ZXtPHG6i1d+ED9Flfaj48TcFMLZsOy51Gc+xJDyNw1OQTl6FJVWl0sXrpZEqOH9BPI=</RefreshToken>
+  <Expiration>2020-01-01T19:13:37Z</Expiration>
+  <Parameters />
+</RestToken>

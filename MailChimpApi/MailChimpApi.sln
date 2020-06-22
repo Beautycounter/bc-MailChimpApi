@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30128.74
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MailChimpApi", "MailChimpApi.csproj", "{AE4E1A2B-8E7F-47A6-91A3-0971CFEA6BA6}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{AE4E1A2B-8E7F-47A6-91A3-0971CFEA6BA6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AE4E1A2B-8E7F-47A6-91A3-0971CFEA6BA6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AE4E1A2B-8E7F-47A6-91A3-0971CFEA6BA6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AE4E1A2B-8E7F-47A6-91A3-0971CFEA6BA6}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {9D04AC0C-3419-4EC0-89DA-9EB2B4FFC858}
+	EndGlobalSection
+EndGlobal
